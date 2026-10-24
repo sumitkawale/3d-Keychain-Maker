@@ -1,51 +1,91 @@
-# 3D Keychain Generator
+# 3D Keychain Generator (Vite + React)
 
-A browser app (Vite + React + Three.js) that designs multi-colour 3D-printable keychains.
+Design multi-colour, 3D-printable keychains in the browser and export them for your slicer.
+Built with React 18, Vite 5 and Three.js r128 (pinned, no other runtime dependencies).
 
 ## Run it
 
 ```bash
 npm install
-npm run dev
+npm run dev        # http://localhost:5173
+npm run build      # production build in dist/
+npm run preview    # serve the production build
 ```
 
-Open the URL Vite prints (usually http://localhost:5173).
+Google Fonts load from the internet; everything else works offline.
 
-Production build:
+## Deploy to GitHub Pages
+
+`vite.config.js` uses `base: './'`, so the build works from any sub-path such as `https://<user>.github.io/<repo>/` (checked by serving `dist/` from a sub-folder). There is no router, so no 404.html trick is needed.
+
+**Option A: the `gh-pages` package**
 
 ```bash
-npm run build
-npm run preview
+npm install
+npm run deploy      # builds, then publishes dist/ to the gh-pages branch
 ```
 
-Google Fonts load from the internet. Three.js and SVGLoader come from npm.
+Then open the repo **Settings > Pages** and set **Source = Deploy from a branch**, **Branch = gh-pages**, **Folder = / (root)**.
 
-## Project layout
+**Option B: GitHub Actions** (`.github/workflows/deploy.yml` is included)
 
-| Path | Purpose |
-|------|---------|
-| `index.html` | Vite entry HTML |
-| `src/main.jsx` | React bootstrap |
-| `src/App.jsx` | Main layout and app state |
-| `src/App.css` | Styles (light / dark theme) |
-| `src/components/` | UI components (cards, number fields, groups) |
-| `src/hooks/useThreeViewer.js` | Canvas, camera, orbit controls |
-| `src/lib/geometryCore.js` | Text/SVG/PNG/STL/OBJ geometry, contours, borders |
-| `src/lib/buildModel.js` | Assembles the 3D keychain mesh |
-| `src/lib/export.js` | 3MF / OBJ / STL zip export |
-| `js/`, `vendor/` | Legacy static version (no build step); kept for reference |
+Set **Settings > Pages > Source = GitHub Actions** and push to `main`.
+
+**If you still get a 404**
+
+1. Pages source must match how you deploy. A green pipeline only means the files were pushed, not that Pages serves them. Branch deploy needs Source = branch `gh-pages` / root. The Actions workflow needs Source = GitHub Actions.
+2. `index.html` must be at the root of the `gh-pages` branch (not inside a `dist/` folder). Publish the contents of `dist`, for example with `gh-pages -d dist`.
+3. Use the right URL: `https://<user>.github.io/<repo-name>/`. The repo name is case-sensitive, and the site root `https://<user>.github.io/` shows a different (user) site.
+4. After the first deploy, wait a minute or two, then check **Settings > Pages** for the "Your site is live at ..." banner, and the **Actions** tab for the "pages build and deployment" run.
+5. A private repo needs a paid plan for Pages. Make the repo public or check your plan.
+6. A blank page with 404s for `/assets/...` in the browser console means an absolute base was used. Keep `base: './'`, or set `base: '/<repo-name>/'`.
+
+## Project structure
+
+```
+index.html                 Vite entry (Google Fonts stylesheets)
+src/
+  main.jsx                 Mounts <App/> and registers the bundled Google Fonts list
+  App.jsx                  Layout: <Viewport/> + <Sidebar/> inside the store provider
+  styles.css               Light/dark theme and all component styles
+  state/
+    reducer.js             App state + undo/redo history (edits to the same field are merged)
+    tree.js                Component tree helpers (groups, move, patch, remove) and defaults
+    StoreContext.jsx       Provider: state, actions, debounced model rebuild, keyboard shortcuts
+  lib/                     Pure logic, no React
+    constants.js           Settings fields, defaults, positions
+    fonts.js               Font list store, Google Fonts loader, useFonts() hook
+    raster.js              Marching-squares tracing and canvas masks
+    geometry.js            Text/SVG/PNG/STL/OBJ to geometry, base shapes, keyring shapes
+    buildKeychain.js       Builds the whole keychain as a THREE.Group from the state
+    exporters.js           Zip writer, STL, OBJ + MTL and 3MF export
+    icons.js               Reads uploaded icon files
+  components/
+    Viewport.jsx           Three.js preview (orbit / zoom / pinch) and size readout
+    Sidebar.jsx            Toolbar (undo, redo, new) and all sections
+    sections/              One file per panel section (Components, Layout, Base, Border,
+                           Border icons & text, Keyring hole, Fonts, Export)
+    list/                  ItemCard, GroupCard and the drag-and-drop hook
+    ui/                    Section, FontPicker and bound field components
+```
+
+## How it works
+
+1. All edits go through `state/reducer.js`, which keeps `{ comps, bic, settings }` plus undo/redo stacks.
+2. `StoreContext` rebuilds the 3D model 150 ms after the last change by calling `lib/buildKeychain.js`.
+3. `Viewport` shows the resulting `THREE.Group`; the Export section turns the same group into a zip.
 
 ## Features
 
-- Text, SVG, PNG, STL and OBJ components; groups with show/hide and reorder-friendly cards.
-- Google Fonts: pre-loaded list, plus add any `fonts.googleapis.com` link or font name.
-- Base shapes: rounded rectangle, pill, oval, hexagon, or contour (Light / Regular / Hard).
-- Borders: solid, double, dashed, dotted, beaded. Border icons and border text.
-- Keyring hole with outer/hole shapes, padding, rotation, and optional slope heights.
-- Undo/redo (Ctrl/Cmd+Z, Ctrl+Y) and New/clear.
-- Export zip: 3MF, OBJ + MTL, or STL (full model + one STL per colour when needed).
+- Text, SVG, PNG, STL and OBJ components; groups (parent / child) with show / hide; drag to reorder or move into groups.
+- Google Fonts: bundled list plus any `fonts.googleapis.com` link or font name; font picker previews each font and supports the arrow keys.
+- Base shapes: rounded rectangle, pill, oval, hexagon, or a contour that follows the content (Light / Regular / Hard).
+- Borders: solid, double, dashed, dotted, beaded; border icons and border text with position, rotation, padding, flip and "go around" mode.
+- Keyring hole: circle, heart, flower, rectangle, pentagon or hexagon outer shape; round, rectangle, pentagon or hexagon hole; rotation, padding, move, separate sizes, normal or sloped height.
+- Undo / redo (Ctrl/Cmd+Z, Ctrl+Y) and a New / clear button that can be undone.
+- Export a zip: 3MF (each colour is a part with a filament number), OBJ + MTL, or STL (full model plus one STL per colour).
 
 ## Notes
 
 - SVG shapes must be filled (stroke-only icons are skipped). PNGs are traced into one-colour shapes.
-- Export uses a normal browser download when not running inside claude.ai.
+- The 3MF filament numbers follow the order of colours in the model; set the real filament colours in your slicer.
