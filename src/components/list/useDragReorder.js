@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
+import { findNode, flat } from '../../state/tree.js';
 
 /**
- * Pointer-based drag and drop for the component list. Cards can be reordered at the top level,
- * or moved into / out of groups (groups themselves stay top-level). Works with mouse and touch.
+ * Pointer-based drag and drop for the component list. Cards can be reordered, or moved into / out of groups
+ * (groups can be nested, but never dropped into themselves). Works with mouse and touch.
  */
 export default function useDragReorder({ comps, onMove }) {
   const rootRef = useRef(null);
@@ -26,8 +27,11 @@ export default function useDragReorder({ comps, onMove }) {
     const el = document.elementFromPoint(e.clientX, e.clientY);
     let c = el && el.closest('[data-container]');
     if (!c || !rootRef.current.contains(c)) return;
-    const dragged = comps.find((n) => n.id === dragId) || comps.flatMap((n) => n.kids || []).find((n) => n.id === dragId);
-    if (dragged && dragged.type === 'group') c = rootRef.current;
+    const dragged = findNode(comps, dragId);
+    if (dragged && dragged.kids && c.dataset.container !== 'root') {
+      const blocked = new Set([dragged.id, ...flat(dragged.kids).map((n) => n.id)]);
+      if (blocked.has(Number(c.dataset.container))) return;
+    }
     const siblings = [...c.children].filter((x) => x.classList.contains('card') && Number(x.dataset.id) !== dragId);
     let index = siblings.findIndex((x) => {
       const r = x.getBoundingClientRect();

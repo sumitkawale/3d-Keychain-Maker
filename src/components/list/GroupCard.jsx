@@ -5,8 +5,9 @@ import { useStore } from '../../state/StoreContext.jsx';
 import { NumberField } from '../ui/fields.jsx';
 import Icon, { IconButton } from '../ui/Icon.jsx';
 import ItemCard from './ItemCard.jsx';
+import MoveFields from './MoveFields.jsx';
 
-/** Parent card: holds child components laid out together, with its own direction, gap and visibility. */
+/** Parent card: holds child components (and other groups) laid out together, with its own direction, gap, move and visibility. */
 export default function GroupCard({ node, dragId }) {
   const { actions } = useStore();
   const fileRef = useRef(null);
@@ -47,12 +48,16 @@ export default function GroupCard({ node, dragId }) {
           <NumberField value={node.gap} min={0} step={0.5} onChange={(v) => up({ gap: v }, true)} />
         </div>
       </div>
+      <MoveFields node={node} onChange={up} />
       <div className="kids" data-container={node.id}>
-        {node.kids.map((k) => <ItemCard key={k.id} node={k} dragging={dragId === k.id} />)}
+        {node.kids.map((k) => (k.type === 'group'
+          ? <GroupCard key={k.id} node={k} dragId={dragId} />
+          : <ItemCard key={k.id} node={k} dragging={dragId === k.id} />))}
       </div>
       <div className="row">
         <button type="button" className="sec" onClick={() => actions.addItem({ type: 'text', text: 'Text', font: getLastFont(), size: 12 }, { parentId: node.id })}><Icon name="type" /> Text</button>
         <button type="button" className="sec" onClick={() => fileRef.current.click()}><Icon name="image" /> Icon</button>
+        <button type="button" className="sec" onClick={() => actions.addGroup(node.id)}><Icon name="folder" /> Group</button>
         <input ref={fileRef} type="file" accept=".svg,.png,.stl,.obj" multiple hidden onChange={addIcons} />
       </div>
     </div>

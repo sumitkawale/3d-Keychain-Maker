@@ -21,7 +21,7 @@ export function StoreProvider({ children }) {
     setSetting: (key, value, coalesce = false) => dispatch({ type: 'setting', key, value, coalesce }),
     patchNode: (id, patch, coalesce = false) => dispatch({ type: 'patch', id, patch, coalesce }),
     addItem: (item, opts = {}) => dispatch({ type: 'addItem', item, border: !!opts.border, parentId: opts.parentId }),
-    addGroup: () => dispatch({ type: 'addGroup' }),
+    addGroup: (parentId) => dispatch({ type: 'addGroup', parentId }),
     removeNode: (id) => dispatch({ type: 'remove', id }),
     moveNode: (id, container, index, first) => dispatch({ type: 'move', id, container, index, first }),
     clear: () => dispatch({ type: 'clear' }),

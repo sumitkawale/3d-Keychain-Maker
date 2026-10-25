@@ -3,8 +3,8 @@ import { PALETTE } from '../lib/constants.js';
 let uid = 1;
 export const nextId = () => ++uid;
 
-/** Flattens the component tree (top-level items, groups and their children). */
-export const flat = (list) => list.flatMap((n) => (n.kids ? [n, ...n.kids] : [n]));
+/** Flattens the component tree (items and groups at every depth). */
+export const flat = (list) => list.flatMap((n) => (n.kids ? [n, ...flat(n.kids)] : [n]));
 
 export const findNode = (list, id) => flat(list).find((n) => n.id === id);
 
@@ -33,22 +33,19 @@ export function defaultComps() {
   return [{ id: nextId(), type: 'text', text: 'Your Name', font: 'Roboto Slab', size: 12, height: 1.2, color: '#ffffff' }];
 }
 
-/** Returns a new list where the node with this id has been patched (works inside groups too). */
+/** Returns a new list where the node with this id has been patched (at any depth). */
 export function patchNode(list, id, patch) {
   return list.map((n) => {
     if (n.id === id) return { ...n, ...patch };
-    if (n.kids) return { ...n, kids: n.kids.map((k) => (k.id === id ? { ...k, ...patch } : k)) };
-    return n;
+    return n.kids ? { ...n, kids: patchNode(n.kids, id, patch) } : n;
   });
 }
 
 export function removeNode(list, id) {
-  return list
-    .filter((n) => n.id !== id)
-    .map((n) => (n.kids ? { ...n, kids: n.kids.filter((k) => k.id !== id) } : n));
+  return list.filter((n) => n.id !== id).map((n) => (n.kids ? { ...n, kids: removeNode(n.kids, id) } : n));
 }
 
-/** Inserts a node into the root list ('root') or into a group at the given index. */
+/** Inserts a node into the root list ('root') or into a group (at any depth) at the given index. */
 export function insertNode(list, container, index, node) {
   if (container === 'root') {
     const next = [...list];
@@ -56,20 +53,22 @@ export function insertNode(list, container, index, node) {
     return next;
   }
   return list.map((n) => {
-    if (n.id !== container) return n;
-    const kids = [...n.kids];
-    kids.splice(Math.min(index, kids.length), 0, node);
-    return { ...n, kids };
+    if (n.id === container) {
+      const kids = [...n.kids];
+      kids.splice(Math.min(index, kids.length), 0, node);
+      return { ...n, kids };
+    }
+    return n.kids ? { ...n, kids: insertNode(n.kids, container, index, node) } : n;
   });
 }
 
 /** Where a node currently lives: {container, index}. */
-export function locate(list, id) {
+export function locate(list, id, container = 'root') {
   const i = list.findIndex((n) => n.id === id);
-  if (i >= 0) return { container: 'root', index: i };
+  if (i >= 0) return { container, index: i };
   for (const n of list) {
-    const k = n.kids ? n.kids.findIndex((x) => x.id === id) : -1;
-    if (k >= 0) return { container: n.id, index: k };
+    const r = n.kids ? locate(n.kids, id, n.id) : null;
+    if (r) return r;
   }
   return null;
 }

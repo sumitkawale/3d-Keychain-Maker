@@ -16,13 +16,24 @@ export async function buildKeychain(st) {
   await Promise.all(texts.map((c) => document.fonts.load(fcss(c.font), 'Ag').catch(() => 0)));
   const group = new THREE.Group();
  const o=Object.fromEntries(Object.keys(FIELDS).map((k)=>[k,num(s,k)])),type=s.shape,vert=s.dir=='v',bs=s.bs,cd=s.cd;
- const mkI=c=>({c,r:gen(c)}),blocks=[],ok=[];let nI=0;
- st.comps.forEach(n=>{if(n.off)return;if(n.type=='group'){const m=n.kids.filter(k=>!k.off).map(mkI);nI+=m.length;const g=m.filter(i=>i.r);if(g.length){blocks.push({m:g,v:n.dir=='v',gap:+n.gap||0});ok.push(...g)}}else{const i=mkI(n);nI++;if(i.r){blocks.push({m:[i],v:false,gap:0});ok.push(i)}}});
+ const mkI=c=>({c,r:gen(c)}),ok=[];let nI=0;
+ const lay=(a,v,g)=>{const s=a.reduce((t,i)=>t+(v?i.h:i.w),0)+g*Math.max(0,a.length-1),cr=a.reduce((m,i)=>Math.max(m,v?i.w:i.h),0);let p=0;return{w:v?cr:s,h:v?s:cr,pos:a.map(i=>{const L=v?i.h:i.w,m=v?s/2-p-L/2:-s/2+p+L/2;p+=L+g;return v?[0,m]:[m,0]})}};
+ /* Each node becomes a block {w,h,place(x,y)}; groups lay out their children (groups can nest), and the move offsets nudge the result. */
+ const mkBlock=n=>{
+  if(n.off)return null;
+  const dx=(+n.ml||0)-(+n.mr||0),dy=(+n.mb||0)-(+n.mt||0);
+  if(n.type=='group'){
+   const kids=n.kids.map(mkBlock).filter(Boolean);if(!kids.length)return null;
+   const l=lay(kids,n.dir=='v',+n.gap||0);
+   return{w:l.w,h:l.h,place:(x,y)=>kids.forEach((k,j)=>k.place(x+dx+l.pos[j][0],y+dy+l.pos[j][1]))};
+  }
+  const i=mkI(n);nI++;if(!i.r)return null;ok.push(i);
+  return{w:i.r.w,h:i.r.h,place:(x,y)=>{i.x=x+dx;i.y=y+dy}};
+ };
+ const blocks=st.comps.map(mkBlock).filter(Boolean);
  const bits=st.bic.filter(c=>!c.off).map(mkI),bk=bits.filter(i=>i.r),bad=nI-ok.length+bits.length-bk.length;
-  const lay=(a,v,g)=>{const s=a.reduce((t,i)=>t+(v?i.h:i.w),0)+g*Math.max(0,a.length-1),cr=a.reduce((m,i)=>Math.max(m,v?i.w:i.h),0);let p=0;return{w:v?cr:s,h:v?s:cr,pos:a.map(i=>{const L=v?i.h:i.w,m=v?s/2-p-L/2:-s/2+p+L/2;p+=L+g;return v?[0,m]:[m,0]})}};
- blocks.forEach(b=>{const l=lay(b.m.map(i=>i.r),b.v,b.gap);b.w=l.w;b.h=l.h;b.l=l});
  const M=lay(blocks,vert,o.gap);
- blocks.forEach((b,j)=>b.m.forEach((i,k)=>{i.x=M.pos[j][0]+b.l.pos[k][0];i.y=M.pos[j][1]+b.l.pos[k][1]}));
+ blocks.forEach((b,j)=>b.place(M.pos[j][0],M.pos[j][1]));
  const add=(geo,z,col,x=0,y=0,po)=>{const mt=new THREE.MeshStandardMaterial({color:col,roughness:.55});if(po){mt.polygonOffset=true;mt.polygonOffsetFactor=-1;mt.polygonOffsetUnits=-1}const m=new THREE.Mesh(geo,mt);m.position.set(x,y,z);group.add(m)};
  const addR=(i,z)=>i.r.geos.forEach(g=>add(g.geo,z,(!i.c.recolor&&g.col)||i.c.color,i.x,i.y)),ex=(sh,d)=>new THREE.ExtrudeGeometry(sh,X(d));
  /* base: primitive shape, or a contour that wraps the content (dilated union of all components) */
@@ -36,7 +47,7 @@ export async function buildKeychain(st) {
   if(L.length&&cs=='light'){const P1=toShapes(L,1/R,box.x0,box.y1,false).big,m2=mask(box,(x,tf)=>{pp(x,tf,P1);x.fill();x.globalCompositeOperation='destination-out';pp(x,tf,P1);x.lineWidth=o.pad*R;x.stroke()}),L2=tr(m2);if(L2.length)L=L2}
   if(L.length){const t=toShapes(L,1/R,box.x0,box.y1,false);Bsh=t.shapes;B=t.big}
  }
- if(!B){const k={rect:1,pill:1.05,ellipse:1.42,hex:1.38}[type]||1,bw=Math.max(10,M.w*k+2*o.pad),bh=Math.max(10,M.h*k+2*o.pad);Bsh=mk(type,bw,bh);B=Bsh.getPoints(64)}
+ if(!B){const k={rect:1,pill:1.05,ellipse:1.42,hex:1.38}[type]||1,cw=ok.length?Math.max(M.w,Math.max(...ok.map(i=>Math.abs(i.x)+i.r.w/2))*2):M.w,ch=ok.length?Math.max(M.h,Math.max(...ok.map(i=>Math.abs(i.y)+i.r.h/2))*2):M.h,bw=Math.max(10,cw*k+2*o.pad),bh=Math.max(10,ch*k+2*o.pad);Bsh=mk(type,bw,bh);B=Bsh.getPoints(64)}
  const bb=B.reduce((a,p)=>({x0:Math.min(a.x0,p.x),x1:Math.max(a.x1,p.x),y0:Math.min(a.y0,p.y),y1:Math.max(a.y1,p.y)}),{x0:1e9,x1:-1e9,y0:1e9,y1:-1e9}),cx=(bb.x0+bb.x1)/2,cy=(bb.y0+bb.y1)/2;
  
  ok.forEach(i=>addR(i,o.baseT));

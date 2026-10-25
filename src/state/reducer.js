@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS } from '../lib/constants.js';
-import { defaultComps, findNode, insertNode, locate, makeGroup, makeItem, patchNode, removeNode } from './tree.js';
+import { defaultComps, findNode, flat, insertNode, locate, makeGroup, makeItem, patchNode, removeNode } from './tree.js';
 
 const HISTORY_LIMIT = 100;
 const COALESCE_MS = 800;
@@ -44,8 +44,11 @@ export function reducer(state, a) {
       return commit(state, { ...p, comps: [...p.comps, item] });
     }
 
-    case 'addGroup':
-      return commit(state, { ...p, comps: [...p.comps, makeGroup(p.comps.filter((n) => n.type === 'group').length)] });
+    case 'addGroup': {
+      const group = makeGroup(flat(p.comps).filter((n) => n.type === 'group').length);
+      const comps = a.parentId != null ? insertNode(p.comps, a.parentId, 1e9, group) : [...p.comps, group];
+      return commit(state, { ...p, comps });
+    }
 
     case 'remove':
       return commit(state, { ...p, comps: removeNode(p.comps, a.id), bic: p.bic.filter((n) => n.id !== a.id) });
@@ -54,7 +57,8 @@ export function reducer(state, a) {
       const node = findNode(p.comps, a.id);
       const from = locate(p.comps, a.id);
       if (!node || !from) return state;
-      if (node.type === 'group' && a.container !== 'root') return state;
+      // A group cannot be moved into itself or into one of its own descendants.
+      if (node.kids && a.container !== 'root' && (a.container === node.id || flat(node.kids).some((n) => n.id === a.container))) return state;
       if (from.container === a.container && from.index === a.index) return state;
       const comps = insertNode(removeNode(p.comps, a.id), a.container, a.index, node);
       const present = { ...p, comps };

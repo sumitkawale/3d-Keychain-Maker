@@ -5,6 +5,7 @@ import { readIcon } from '../../lib/icons.js';
 import { useStore } from '../../state/StoreContext.jsx';
 import { NumberField } from '../ui/fields.jsx';
 import FontPicker from '../ui/FontPicker.jsx';
+import MoveFields from './MoveFields.jsx';
 import Icon, { IconButton } from '../ui/Icon.jsx';
 
 const ICON_ACCEPT = '.svg,.png,.stl,.obj';
@@ -78,6 +79,8 @@ export default function ItemCard({ node, border = false, dragging = false }) {
           <NumberField value={node.rot || 0} step={5} onChange={(v) => up({ rot: v }, true)} />
         </div>
       </div>
+
+      {!border && <MoveFields node={node} onChange={up} />}
 
       {border && (
         <>
