@@ -1,12 +1,15 @@
 import { DEFAULT_SETTINGS } from '../lib/constants.js';
 import { defaultComps, findNode, flat, insertNode, locate, makeGroup, makeItem, patchNode, removeNode } from './tree.js';
 
+/** Identity of the project being edited: its unique id (null until first saved) and name. */
+export const EMPTY_META = { id: null, name: '' };
+
 const HISTORY_LIMIT = 100;
 const COALESCE_MS = 800;
 
 export function initialState() {
   return {
-    present: { comps: defaultComps(), bic: [], settings: { ...DEFAULT_SETTINGS } },
+    present: { comps: defaultComps(), bic: [], settings: { ...DEFAULT_SETTINGS }, meta: EMPTY_META },
     past: [],
     future: [],
     last: { key: null, t: 0 },
@@ -67,12 +70,17 @@ export function reducer(state, a) {
     }
 
     case 'load': {
-      const present = { comps: a.present.comps, bic: a.present.bic || [], settings: { ...DEFAULT_SETTINGS, ...a.present.settings } };
+      const present = { comps: a.present.comps, bic: a.present.bic || [], settings: { ...DEFAULT_SETTINGS, ...a.present.settings }, meta: a.present.meta || EMPTY_META };
       return a.silent ? { ...state, present } : commit(state, present);
     }
 
     case 'clear':
-      return commit(state, { comps: defaultComps(), bic: [], settings: { ...DEFAULT_SETTINGS } });
+      return commit(state, { comps: defaultComps(), bic: [], settings: { ...DEFAULT_SETTINGS }, meta: EMPTY_META });
+
+    case 'meta': {
+      const present = { ...p, meta: { ...p.meta, ...a.patch } };
+      return a.silent ? { ...state, present } : commit(state, present, a.coalesce ? 'meta' : null);
+    }
 
     case 'undo': {
       if (!state.past.length) return state;

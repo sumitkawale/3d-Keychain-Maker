@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { deleteProject, listProjects, putProject } from '../lib/db.js';
+import { deleteProject, getProject, listProjects, putProject } from '../lib/db.js';
 import { downloadBlob } from '../lib/exporters.js';
-import { createProject, fileSlug } from '../lib/library.js';
+import { displayId, fileSlug, saveProject } from '../lib/library.js';
 import { parseProjectFile, serializeProject } from '../lib/projectFile.js';
 import { goEditor } from '../lib/useRoute.js';
 import { useStore } from '../state/StoreContext.jsx';
@@ -22,7 +22,7 @@ export default function HistoryPage() {
   useEffect(() => { refresh(); }, []);
 
   const open = async (p) => {
-    await loadProject(p.data);
+    await loadProject(p.data, { meta: { id: p.id, name: p.name } });
     goEditor();
   };
 
@@ -32,7 +32,7 @@ export default function HistoryPage() {
     refresh();
   };
 
-  const download = (p) => downloadBlob(serializeProject(p.name, p.data), `${fileSlug(p.name)}.keychain.json`, 'application/json');
+  const download = (p) => downloadBlob(serializeProject(p.name, p.data, p.id), `${fileSlug(p.name)}.keychain.json`, 'application/json');
 
   const commitRename = async (p) => {
     const name = draft.trim();
@@ -49,8 +49,13 @@ export default function HistoryPage() {
     let added = 0;
     for (const f of files) {
       try {
-        const { name, project } = parseProjectFile(await f.text());
-        await createProject(name, project);
+        const { id, name, project } = parseProjectFile(await f.text());
+        let useId = id;
+        if (id && (await getProject(id))) {
+          // Same unique id already saved here: replace it, or keep both by giving the import a new id.
+          if (!window.confirm(`A keychain with ID ${displayId(id)} is already saved. Replace it with this file? (Cancel imports it as a new copy.)`)) useId = null;
+        }
+        await saveProject({ id: useId, name, data: project });
         added += 1;
       } catch (err) {
         setMessage(`${f.name}: ${err.message}`);
@@ -94,6 +99,7 @@ export default function HistoryPage() {
               ) : (
                 <div className="hname" title={p.name}>{p.name}</div>
               )}
+              <div className="hid">{displayId(p.id)}</div>
               <div className="note">{fmtDate(p.savedAt)}</div>
               <div className="hactions">
                 <button type="button" className="primary" onClick={() => open(p)}><Icon name="folder" /> Open</button>

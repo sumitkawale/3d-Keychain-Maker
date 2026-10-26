@@ -15,8 +15,8 @@ function fromBase64(text) {
   return bytes;
 }
 
-export function serializeProject(name, project) {
-  return JSON.stringify({ app: APP_ID, version: 1, name, savedAt: Date.now(), project }, (k, v) => {
+export function serializeProject(name, project, id = null) {
+  return JSON.stringify({ app: APP_ID, version: 1, id, name, savedAt: Date.now(), project }, (k, v) => {
     if (v instanceof ArrayBuffer) return { __t: 'ab', b: toBase64(new Uint8Array(v)) };
     if (ArrayBuffer.isView(v)) return { __t: 'u8', b: toBase64(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)) };
     return v;
@@ -38,5 +38,5 @@ export function parseProjectFile(text) {
   if (!o || o.app !== APP_ID || !o.project || !Array.isArray(o.project.comps) || !Array.isArray(o.project.bic || [])) {
     throw new Error('This is not a 3D Keychain Maker project file.');
   }
-  return { name: o.name || 'Imported keychain', project: { ...o.project, bic: o.project.bic || [] } };
+  return { id: o.id || null, name: o.name || 'Imported keychain', project: { ...o.project, bic: o.project.bic || [] } };
 }

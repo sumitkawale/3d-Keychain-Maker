@@ -25,6 +25,7 @@ export function StoreProvider({ children }) {
     setSetting: (key, value, coalesce = false) => dispatch({ type: 'setting', key, value, coalesce }),
     patchNode: (id, patch, coalesce = false) => dispatch({ type: 'patch', id, patch, coalesce }),
     addItem: (item, opts = {}) => dispatch({ type: 'addItem', item, border: !!opts.border, parentId: opts.parentId }),
+    setMeta: (patch, opts = {}) => dispatch({ type: 'meta', patch, silent: !!opts.silent, coalesce: !!opts.coalesce }),
     addGroup: (parentId) => dispatch({ type: 'addGroup', parentId }),
     removeNode: (id) => dispatch({ type: 'remove', id }),
     moveNode: (id, container, index, first) => dispatch({ type: 'move', id, container, index, first }),
@@ -34,17 +35,17 @@ export function StoreProvider({ children }) {
   }), []);
 
   /** Replaces the editor content with a saved project (one undo step unless `silent`). */
-  const loadProject = useCallback(async (data, silent = false) => {
+  const loadProject = useCallback(async (data, { silent = false, meta } = {}) => {
     await restoreFonts(data.fonts);
     syncIdCounter(data.comps, data.bic);
-    dispatch({ type: 'load', silent, present: { comps: data.comps, bic: data.bic || [], settings: data.settings } });
+    dispatch({ type: 'load', silent, present: { comps: data.comps, bic: data.bic || [], settings: data.settings, meta } });
   }, []);
 
   // Restore the auto-saved working copy once, so edits survive refreshes.
   useEffect(() => {
     let dead = false;
     loadDraft().then(async (draft) => {
-      if (draft && Array.isArray(draft.comps) && !dead) await loadProject(draft, true);
+      if (draft && Array.isArray(draft.comps) && !dead) await loadProject(draft, { silent: true, meta: draft.meta });
     }).finally(() => { if (!dead) setReady(true); });
     return () => { dead = true; };
   }, [loadProject]);
@@ -52,7 +53,7 @@ export function StoreProvider({ children }) {
   // Auto-save the working copy shortly after every change (only after the saved copy has been restored).
   useEffect(() => {
     if (!ready) return undefined;
-    const t = setTimeout(() => saveDraft(snapshotProject(present)), 400);
+    const t = setTimeout(() => saveDraft({ ...snapshotProject(present), meta: present.meta }), 400);
     return () => clearTimeout(t);
   }, [present, ready, fonts]);
 
@@ -85,6 +86,7 @@ export function StoreProvider({ children }) {
     comps: present.comps,
     bic: present.bic,
     settings: present.settings,
+    meta: present.meta,
     canUndo: state.past.length > 0,
     canRedo: state.future.length > 0,
     model,

@@ -38,5 +38,6 @@ export const saveDraft = (draft) => run('kv', 'readwrite', (s) => s.put(draft, '
 export const listProjects = () => run('projects', 'readonly', (s) => s.getAll())
   .then((all) => all.sort((a, b) => b.savedAt - a.savedAt))
   .catch(() => []);
+export const getProject = (id) => run('projects', 'readonly', (s) => s.get(id)).catch(() => null);
 export const putProject = (project) => run('projects', 'readwrite', (s) => s.put(project));
 export const deleteProject = (id) => run('projects', 'readwrite', (s) => s.delete(id));
