@@ -3,6 +3,14 @@ import { PALETTE } from '../lib/constants.js';
 let uid = 1;
 export const nextId = () => ++uid;
 
+/** After loading a project, make sure new ids never collide with the loaded ones. */
+export function syncIdCounter(...lists) {
+  lists.forEach((list) => (list || []).forEach((n) => {
+    if (n.id > uid) uid = n.id;
+    if (n.kids) syncIdCounter(n.kids);
+  }));
+}
+
 /** Flattens the component tree (items and groups at every depth). */
 export const flat = (list) => list.flatMap((n) => (n.kids ? [n, ...flat(n.kids)] : [n]));
 

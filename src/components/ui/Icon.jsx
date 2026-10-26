@@ -17,6 +17,13 @@ const PATHS = {
   replace: <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></>,
   download: <><path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M5 21h14" /></>,
   code: <><path d="M16 18l6-6-6-6" /><path d="M8 6l-6 6 6 6" /></>,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  save: <><path d="M5 3h11l3 3v15H5z" /><path d="M8 3v6h7V3" /><path d="M8 21v-7h8v7" /></>,
+  upload: <><path d="M12 15V3" /><path d="M7 8l5-5 5 5" /><path d="M5 21h14" /></>,
+  pencil: <><path d="M4 20h4L19 9l-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></>,
+  arrowLeft: <><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></>,
+  check: <path d="M5 12l5 5L20 7" />,
+  file: <><path d="M6 3h8l5 5v13H6z" /><path d="M14 3v5h5" /></>,
   palette: <><circle cx="12" cy="12" r="9" /><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" /><circle cx="16" cy="10" r="1" fill="currentColor" stroke="none" /></>,
 };
 

@@ -13,6 +13,7 @@ const BASE_FONTS = [
 ];
 
 let fonts = BASE_FONTS;
+let fontInputs = [];
 let lastFont = 'Roboto Slab';
 const subs = new Set();
 const emit = () => subs.forEach((s) => s());
@@ -21,6 +22,8 @@ export const getFonts = () => fonts;
 export const fcss = (name) => (fonts.find((f) => f.n === name) || fonts[0]).css;
 /** CSS font shorthand used to preview a font in the picker. */
 export const previewFont = (f) => f.css.replace('140px', '17px');
+/** Links / names the user added, so they can be reloaded with a saved project. */
+export const getFontInputs = () => fontInputs;
 export const getLastFont = () => lastFont;
 export const setLastFont = (n) => { lastFont = n; };
 
@@ -91,9 +94,17 @@ export function addGoogleFonts(input) {
         try { await document.fonts.load(`${f.wt} 140px "${f.n}",sans-serif`, 'Ag'); } catch { /* ignore */ }
       }
       const added = addFonts(list);
+      if (!fontInputs.includes(v)) fontInputs = [...fontInputs, v];
       resolve(`Added ${added} font(s)${added < list.length ? ` (${list.length - added} already in the list)` : ''}. Earlier fonts are kept.`);
     };
     link.onerror = () => { link.remove(); resolve('Could not load that link. Check it and try again.'); };
     document.head.append(link);
   });
+}
+
+/** Re-adds fonts a saved project used (skips ones already added). */
+export async function restoreFonts(inputs) {
+  for (const input of inputs || []) {
+    if (!fontInputs.includes(input)) await addGoogleFonts(input);
+  }
 }

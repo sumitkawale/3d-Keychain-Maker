@@ -8,6 +8,8 @@ import ExportSection from './sections/ExportSection.jsx';
 import FontsSection from './sections/FontsSection.jsx';
 import KeyringSection from './sections/KeyringSection.jsx';
 import LayoutSection from './sections/LayoutSection.jsx';
+import SaveSection from './sections/SaveSection.jsx';
+import { goHistory } from '../lib/useRoute.js';
 
 function Toolbar() {
   const { canUndo, canRedo, actions } = useStore();
@@ -23,7 +25,10 @@ function Toolbar() {
 export default function Sidebar() {
   return (
     <aside>
-      <h1>3D Keychain Generator</h1>
+      <div className="titlebar">
+        <h1>3D Keychain Generator</h1>
+        <button type="button" className="sec" onClick={goHistory}><Icon name="clock" /> History</button>
+      </div>
       <Toolbar />
       <ComponentsSection />
       <LayoutSection />
@@ -33,6 +38,7 @@ export default function Sidebar() {
       <KeyringSection />
       <FontsSection />
       <ExportSection />
+      <SaveSection />
     </aside>
   );
 }

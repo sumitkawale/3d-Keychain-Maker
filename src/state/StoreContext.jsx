@@ -1,7 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react';
 import { buildKeychain } from '../lib/buildKeychain.js';
-import { useFonts } from '../lib/fonts.js';
+import { loadDraft, saveDraft } from '../lib/db.js';
+import { restoreFonts, useFonts } from '../lib/fonts.js';
+import { snapshotProject } from '../lib/library.js';
 import { initialState, reducer } from './reducer.js';
+import { syncIdCounter } from './tree.js';
 
 const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);
@@ -14,6 +17,7 @@ function disposeGroup(group) {
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
   const [model, setModel] = useState(null);
+  const [ready, setReady] = useState(false);
   const fonts = useFonts();
   const { present } = state;
 
@@ -28,6 +32,29 @@ export function StoreProvider({ children }) {
     undo: () => dispatch({ type: 'undo' }),
     redo: () => dispatch({ type: 'redo' }),
   }), []);
+
+  /** Replaces the editor content with a saved project (one undo step unless `silent`). */
+  const loadProject = useCallback(async (data, silent = false) => {
+    await restoreFonts(data.fonts);
+    syncIdCounter(data.comps, data.bic);
+    dispatch({ type: 'load', silent, present: { comps: data.comps, bic: data.bic || [], settings: data.settings } });
+  }, []);
+
+  // Restore the auto-saved working copy once, so edits survive refreshes.
+  useEffect(() => {
+    let dead = false;
+    loadDraft().then(async (draft) => {
+      if (draft && Array.isArray(draft.comps) && !dead) await loadProject(draft, true);
+    }).finally(() => { if (!dead) setReady(true); });
+    return () => { dead = true; };
+  }, [loadProject]);
+
+  // Auto-save the working copy shortly after every change (only after the saved copy has been restored).
+  useEffect(() => {
+    if (!ready) return undefined;
+    const t = setTimeout(() => saveDraft(snapshotProject(present)), 400);
+    return () => clearTimeout(t);
+  }, [present, ready, fonts]);
 
   // Rebuild the 3D model shortly after any change (or when a new font becomes available).
   useEffect(() => {
@@ -61,8 +88,10 @@ export function StoreProvider({ children }) {
     canUndo: state.past.length > 0,
     canRedo: state.future.length > 0,
     model,
+    ready,
+    loadProject,
     actions,
-  }), [present, state.past.length, state.future.length, model, actions]);
+  }), [present, state.past.length, state.future.length, model, ready, loadProject, actions]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

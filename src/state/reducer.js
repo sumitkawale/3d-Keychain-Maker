@@ -66,6 +66,11 @@ export function reducer(state, a) {
       return a.first ? commit(state, present) : { ...state, present };
     }
 
+    case 'load': {
+      const present = { comps: a.present.comps, bic: a.present.bic || [], settings: { ...DEFAULT_SETTINGS, ...a.present.settings } };
+      return a.silent ? { ...state, present } : commit(state, present);
+    }
+
     case 'clear':
       return commit(state, { comps: defaultComps(), bic: [], settings: { ...DEFAULT_SETTINGS } });
 

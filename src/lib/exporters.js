@@ -57,9 +57,9 @@ export function buildExportFiles(group, settings, comps) {
   return { slug, files };
 }
 
-/** Saves bytes as a file through a normal browser download. */
-export function downloadZip(data, filename) {
-  const url = URL.createObjectURL(new Blob([data], { type: 'application/zip' }));
+/** Saves data as a file through a normal browser download. */
+export function downloadBlob(data, filename, type = 'application/octet-stream') {
+  const url = URL.createObjectURL(new Blob([data], { type }));
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
@@ -68,3 +68,5 @@ export function downloadZip(data, filename) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
+
+export const downloadZip = (data, filename) => downloadBlob(data, filename, 'application/zip');
