@@ -6,6 +6,7 @@ import { useStore } from '../../state/StoreContext.jsx';
 import { NumberField } from '../ui/fields.jsx';
 import FontPicker from '../ui/FontPicker.jsx';
 import MoveFields from './MoveFields.jsx';
+import RotateFields from './RotateFields.jsx';
 import Icon, { IconButton } from '../ui/Icon.jsx';
 
 const ICON_ACCEPT = '.svg,.png,.stl,.obj';
@@ -73,12 +74,7 @@ export default function ItemCard({ node, border = false, dragging = false }) {
         </>
       )}
 
-      <div className="row">
-        <div>
-          <label>Rotate (°)</label>
-          <NumberField value={node.rot || 0} step={5} onChange={(v) => up({ rot: v }, true)} />
-        </div>
-      </div>
+      <RotateFields node={node} onChange={up} zKey="rot" />
 
       {!border && <MoveFields node={node} onChange={up} />}
 

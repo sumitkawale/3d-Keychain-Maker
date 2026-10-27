@@ -6,6 +6,7 @@ import { NumberField } from '../ui/fields.jsx';
 import Icon, { IconButton } from '../ui/Icon.jsx';
 import ItemCard from './ItemCard.jsx';
 import MoveFields from './MoveFields.jsx';
+import RotateFields from './RotateFields.jsx';
 
 /** Parent card: holds child components (and other groups) laid out together, with its own direction, gap, move and visibility. */
 export default function GroupCard({ node, dragId }) {
@@ -49,6 +50,7 @@ export default function GroupCard({ node, dragId }) {
         </div>
       </div>
       <MoveFields node={node} onChange={up} />
+      <RotateFields node={node} onChange={up} zKey="rz" />
       <div className="kids" data-container={node.id}>
         {node.kids.map((k) => (k.type === 'group'
           ? <GroupCard key={k.id} node={k} dragId={dragId} />

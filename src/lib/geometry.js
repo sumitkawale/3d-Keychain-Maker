@@ -72,10 +72,24 @@ export function ringShape(k,ri,ki,pd,ra,rb,ro){
  o.holes.push(h);return o}
 export function gen(c){const r=gen0(c);if(!r)return r;
  if(c.fx||c.fy){const sx=c.fx?-1:1,sy=c.fy?-1:1;r.geos.forEach(g=>flipGeo(g.geo,sx,sy));r.sh=r.sh.map(s=>new THREE.Shape(s.getPoints().map(p=>V(p.x*sx,p.y*sy))))}
-const a=(c.rot||0)*PI/180;
- if(a){const cs=Math.cos(a),sn=Math.sin(a),f=p=>V(p.x*cs-p.y*sn,p.x*sn+p.y*cs);r.geos.forEach(g=>g.geo.rotateZ(a));r.sh=r.sh.map(s=>new THREE.Shape(s.getPoints().map(f)));
+const a=(c.rot||0)*PI/180,ax=(c.rx||0)*PI/180,ay=(c.ry||0)*PI/180;
+ if(ax||ay){
+  /* 3D rotation about the item's centre (mid-thickness) in X, Y, Z order, then the lowest point rests on the base. */
+  const m=new THREE.Matrix4().makeRotationZ(a).multiply(new THREE.Matrix4().makeRotationY(ay)).multiply(new THREE.Matrix4().makeRotationX(ax));
+  let zmax=0;r.geos.forEach(g=>{g.geo.computeBoundingBox();zmax=Math.max(zmax,g.geo.boundingBox.max.z)});
+  const zc=zmax/2;r.geos.forEach(g=>{g.geo.translate(0,0,-zc);g.geo.applyMatrix4(m)});
+  let zmin=1e9;r.geos.forEach(g=>{g.geo.computeBoundingBox();zmin=Math.min(zmin,g.geo.boundingBox.min.z)});
+  r.geos.forEach(g=>g.geo.translate(0,0,-zmin));
+  const mp=(p,z)=>{const v=new THREE.Vector3(p.x,p.y,z-zc).applyMatrix4(m);return V(v.x,v.y)};
+  let bot=r.sh.map(s=>s.getPoints().map(p=>mp(p,0))),top=r.sh.flatMap(s=>s.getPoints().map(p=>mp(p,zmax)));
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;bot.flat().concat(top).forEach(p=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)});
+  const cx=(x0+x1)/2,cy=(y0+y1)/2;
+  r.geos.forEach(g=>g.geo.translate(-cx,-cy,0));
+  r.sh=bot.map(pts=>new THREE.Shape(pts.map(p=>V(p.x-cx,p.y-cy))));r.extra=top.map(p=>V(p.x-cx,p.y-cy));
+  r.w=x1-x0;r.h=y1-y0;
+ }else if(a){const cs=Math.cos(a),sn=Math.sin(a),f=p=>V(p.x*cs-p.y*sn,p.x*sn+p.y*cs);r.geos.forEach(g=>g.geo.rotateZ(a));r.sh=r.sh.map(s=>new THREE.Shape(s.getPoints().map(f)));
   let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;r.sh.forEach(s=>s.getPoints().forEach(p=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}));r.w=x1-x0;r.h=y1-y0}
- r.hull=hull(r.sh.flatMap(s=>s.getPoints()));return r}
+ r.hull=hull(r.sh.flatMap(s=>s.getPoints()).concat(r.extra||[]));return r}
 export function gen0(c){
  try{if(c.type=='text'){const t=textOutlines(c.text,fcss(c.font),c.size);return t&&{geos:[{geo:new THREE.ExtrudeGeometry(t.shapes,X(c.height)),col:null}],w:t.w,h:t.h,sh:t.shapes}}
   return c.type=='svg'?svgGeo(c):c.type=='png'?pngGeo(c):c.type=='obj'?objGeo(c):stlGeo(c)}catch(e){return null}

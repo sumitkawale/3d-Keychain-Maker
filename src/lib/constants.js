@@ -18,7 +18,7 @@ export const PS = {
 export const FIELDS = {
   gap: { label: 'Space between components (mm)', min: 0, step: 0.5, def: 3 },
   pad: { label: 'Padding / contour offset (mm)', min: 0.5, step: 0.5, def: 4 },
-  baseT: { label: 'Base thickness (mm)', min: 0.4, step: 0.2, def: 2.4 },
+  baseT: { label: 'Base thickness (mm) — 0 removes the base', min: 0, step: 0.2, def: 2.4 },
   bord: { label: 'Border width (mm)', min: 0, step: 0.2, def: 2 },
   rel: { label: 'Border height (mm)', min: 0.2, step: 0.2, def: 1.2 },
   hole: { label: 'Inner hole size (mm)', min: 0, step: 0.5, def: 4.5 },
@@ -30,6 +30,8 @@ export const FIELDS = {
   rth: { label: 'Ring height (mm)', min: 0.2, step: 0.2, def: 2.4 },
   rhl: { min: 0.2, step: 0.2, def: 2.4 }, rhr: { min: 0.2, step: 0.2, def: 2.4 },
   rro: { step: 5, def: 0 }, rri: { step: 5, def: 0 },
+  rkx: { step: 5, def: 0 }, rky: { step: 5, def: 0 }, rkz: { step: 5, def: 0 },
+  rzt: { min: -100, step: 0.5, def: 0 }, rzb: { min: -100, step: 0.5, def: 0 },
 };
 
 export const DEFAULT_SETTINGS = {
