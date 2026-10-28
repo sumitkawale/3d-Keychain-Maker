@@ -18,6 +18,7 @@ export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
   const [model, setModel] = useState(null);
   const [ready, setReady] = useState(false);
+  const [selection, setSelection] = useState(null);
   const fonts = useFonts();
   const { present } = state;
 
@@ -25,6 +26,7 @@ export function StoreProvider({ children }) {
     setSetting: (key, value, coalesce = false) => dispatch({ type: 'setting', key, value, coalesce }),
     patchNode: (id, patch, coalesce = false) => dispatch({ type: 'patch', id, patch, coalesce }),
     addItem: (item, opts = {}) => dispatch({ type: 'addItem', item, border: !!opts.border, parentId: opts.parentId }),
+    select: (sel) => setSelection(sel),
     setMeta: (patch, opts = {}) => dispatch({ type: 'meta', patch, silent: !!opts.silent, coalesce: !!opts.coalesce }),
     addGroup: (parentId) => dispatch({ type: 'addGroup', parentId }),
     removeNode: (id) => dispatch({ type: 'remove', id }),
@@ -87,13 +89,14 @@ export function StoreProvider({ children }) {
     bic: present.bic,
     settings: present.settings,
     meta: present.meta,
+    selection,
     canUndo: state.past.length > 0,
     canRedo: state.future.length > 0,
     model,
     ready,
     loadProject,
     actions,
-  }), [present, state.past.length, state.future.length, model, ready, loadProject, actions]);
+  }), [present, state.past.length, state.future.length, model, ready, selection, loadProject, actions]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { POSITIONS } from '../../lib/constants.js';
 import { setLastFont } from '../../lib/fonts.js';
 import { readIcon } from '../../lib/icons.js';
@@ -32,8 +32,17 @@ const ITEM_BORDERS = [
 
 /** Card for one text or icon component. `border` switches on the border-item options. */
 export default function ItemCard({ node, border = false, dragging = false }) {
-  const { actions } = useStore();
+  const { actions, selection } = useStore();
   const fileRef = useRef(null);
+  const cardRef = useRef(null);
+  const selected = !!selection && selection.kind === 'item' && selection.id === node.id;
+
+  // When this component is clicked in the preview, bring its card into view.
+  useEffect(() => {
+    if (!selected) return undefined;
+    const t = setTimeout(() => cardRef.current && cardRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
+    return () => clearTimeout(t);
+  }, [selected, selection]);
   const isText = node.type === 'text';
   const up = (patch, coalesce = false) => actions.patchNode(node.id, patch, coalesce);
   const title = isText ? 'Text' : `${node.type.toUpperCase()} · ${node.name || 'icon'}`;
@@ -49,7 +58,7 @@ export default function ItemCard({ node, border = false, dragging = false }) {
   };
 
   return (
-    <div className={`card${node.off ? ' off' : ''}${dragging ? ' drag' : ''}`} data-id={node.id}>
+    <div ref={cardRef} className={`card${node.off ? ' off' : ''}${dragging ? ' drag' : ''}${selected ? ' sel' : ''}`} data-id={node.id}>
       <div className="hd" style={border ? { cursor: 'default' } : undefined}>
         {!border && <Icon name="grip" size={14} className="grip" />}
         <span className="ttl">{title}</span>

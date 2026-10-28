@@ -9,7 +9,7 @@ import { SettingCheck } from '../ui/fields.jsx';
 
 /** Icons and text that sit on the border of the base. */
 export default function BorderItemsSection() {
-  const { bic, actions } = useStore();
+  const { bic, selection, actions } = useStore();
   const fileRef = useRef(null);
   const [svgCode, setSvgCode] = useState('');
 
@@ -30,7 +30,7 @@ export default function BorderItemsSection() {
   };
 
   return (
-    <Section title="Border icons & text">
+    <Section title="Border icons & text" focus={!!selection && selection.kind === 'item' && bic.some((n) => n.id === selection.id)} focusKey={selection}>
       <SettingCheck k="fillb">Fill the base under border icons/text so they stay attached</SettingCheck>
       <div>
         {bic.map((n) => <ItemCard key={n.id} node={n} border />)}

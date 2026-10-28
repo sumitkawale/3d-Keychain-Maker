@@ -54,6 +54,10 @@ src/
     StoreContext.jsx       Provider: state, actions, debounced model rebuild, keyboard shortcuts
   lib/                     Pure logic, no React
     constants.js           Settings fields, defaults, positions
+    db.js                  IndexedDB wrapper (auto-saved draft and saved projects)
+    projectFile.js         Project file format (JSON, binary data as base64)
+    thumbnail.js           Renders preview images for the History page
+    library.js             Creates saved projects (build + preview + store)
     fonts.js               Font list store, Google Fonts loader, useFonts() hook
     raster.js              Marching-squares tracing and canvas masks
     geometry.js            Text/SVG/PNG/STL/OBJ to geometry, base shapes, keyring shapes
@@ -61,6 +65,7 @@ src/
     exporters.js           Zip writer, STL, OBJ + MTL and 3MF export
     icons.js               Reads uploaded icon files
   components/
+    HistoryPage.jsx        Saved keychains with previews (opened with #/history)
     Viewport.jsx           Three.js preview (orbit / zoom / pinch) and size readout
     Sidebar.jsx            Toolbar (undo, redo, new) and all sections
     sections/              One file per panel section (Components, Layout, Base, Border,
@@ -77,12 +82,16 @@ src/
 
 ## Features
 
+- Rotate any component, group or border item around the X, Y and Z axes (a group turns as one piece and rests on the base).
 - Text, SVG, PNG, STL and OBJ components; groups (parent / child, nestable) with show / hide; drag to reorder or move into groups; move any component or group top / bottom / left / right.
 - Google Fonts: bundled list plus any `fonts.googleapis.com` link or font name; font picker previews each font and supports the arrow keys.
+- Base thickness 0 removes the base and main border, leaving only your components with the keyring attached to them.
 - Base shapes: rounded rectangle, pill, oval, hexagon, or a contour that follows the content (Light / Regular / Hard).
 - Borders: solid, double, dashed, dotted, beaded; border icons and border text with position, rotation, padding, flip and "go around" mode.
 - Keyring hole: circle, heart, flower, rectangle, pentagon or hexagon outer shape; round, rectangle, pentagon or hexagon hole; rotation, padding, move, separate sizes, normal or sloped height.
 - Undo / redo (Ctrl/Cmd+Z, Ctrl+Y) and a New / clear button that can be undone.
+- Click a part in the 3D preview to select it: the matching card or section is highlighted and scrolled into view in the panel. Right-drag pans the view across the XY plane, and double-click recentres it.
+- Auto-save to IndexedDB (survives refreshes), unique keychain IDs (`KC-XXXXXXXX`) where saving again updates the same entry, a History page with preview images, and shareable `.keychain.json` project files (save, open, import, rename, delete).
 - Export a zip: 3MF (each colour is a part with a filament number), OBJ + MTL, or STL (full model plus one STL per colour).
 
 ## Notes

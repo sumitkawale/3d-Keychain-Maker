@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { getLastFont } from '../../lib/fonts.js';
 import { readIcon } from '../../lib/icons.js';
 import { useStore } from '../../state/StoreContext.jsx';
+import { flat } from '../../state/tree.js';
 import GroupCard from '../list/GroupCard.jsx';
 import ItemCard from '../list/ItemCard.jsx';
 import useDragReorder from '../list/useDragReorder.js';
@@ -9,7 +10,7 @@ import Icon from '../ui/Icon.jsx';
 import Section from '../ui/Section.jsx';
 
 export default function ComponentsSection() {
-  const { comps, actions } = useStore();
+  const { comps, selection, actions } = useStore();
   const fileRef = useRef(null);
   const [svgCode, setSvgCode] = useState('');
   const { rootRef, dragId, handlers } = useDragReorder({ comps, onMove: actions.moveNode });
@@ -31,7 +32,7 @@ export default function ComponentsSection() {
   };
 
   return (
-    <Section title="Components">
+    <Section title="Components" focus={!!selection && selection.kind === 'item' && flat(comps).some((n) => n.id === selection.id)} focusKey={selection}>
       <div ref={rootRef} data-container="root" {...handlers}>
         {comps.map((n) => (n.type === 'group'
           ? <GroupCard key={n.id} node={n} dragId={dragId} />

@@ -56,9 +56,10 @@ export async function buildKeychain(st) {
   const cx=(x0+x1)/2,cy=(y0+y1)/2;
   i.x=cx;i.y=cy;i.r={...i.r,w:x1-x0,h:y1-y0,sh:bot.map(pts=>new THREE.Shape(pts.map(p=>V(p.x-cx,p.y-cy)))),hull:hull(all.map(p=>V(p.x-cx,p.y-cy)))};
  });
- const add=(geo,z,col,x=0,y=0,po)=>{const mt=new THREE.MeshStandardMaterial({color:col,roughness:.55});if(po){mt.polygonOffset=true;mt.polygonOffsetFactor=-1;mt.polygonOffsetUnits=-1}const m=new THREE.Mesh(geo,mt);m.position.set(x,y,z);group.add(m)};
- const addM=(geo,z,col,Mx)=>{const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:col,roughness:.55}));m.matrixAutoUpdate=false;m.matrix.copy(new THREE.Matrix4().makeTranslation(0,0,z).multiply(Mx));group.add(m)};
- const addR=(i,z)=>i.r.geos.forEach(g=>{const col=(!i.c.recolor&&g.col)||i.c.color;if(i.M)addM(g.geo,z,col,i.M);else add(g.geo,z,col,i.x,i.y)}),ex=(sh,d)=>new THREE.ExtrudeGeometry(sh,X(d));
+ let tag={};
+ const add=(geo,z,col,x=0,y=0,po)=>{const mt=new THREE.MeshStandardMaterial({color:col,roughness:.55});if(po){mt.polygonOffset=true;mt.polygonOffsetFactor=-1;mt.polygonOffsetUnits=-1}const m=new THREE.Mesh(geo,mt);m.position.set(x,y,z);m.userData={...tag};group.add(m)};
+ const addM=(geo,z,col,Mx)=>{const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:col,roughness:.55}));m.matrixAutoUpdate=false;m.matrix.copy(new THREE.Matrix4().makeTranslation(0,0,z).multiply(Mx));m.userData={...tag};group.add(m)};
+ const addR=(i,z)=>i.r.geos.forEach(g=>{tag={kind:'item',id:i.c.id};const col=(!i.c.recolor&&g.col)||i.c.color;if(i.M)addM(g.geo,z,col,i.M);else add(g.geo,z,col,i.x,i.y)}),ex=(sh,d)=>new THREE.ExtrudeGeometry(sh,X(d));
  /* base: primitive shape, or a contour that wraps the content (dilated union of all components) */
  let B,Bsh;
  if((type=='cont'||noBase)&&ok.length){
@@ -96,6 +97,7 @@ export async function buildKeychain(st) {
  let Bf=Bsh;
  const fl=nb.filter(i=>s.fillb||own(i));
  if(fl.length){const bf=bxo(fl,Math.max(...fl.map(ext))+3),m=mask(bf,(x,tf)=>{pp(x,tf,B);x.fill();x.lineJoin='round';fl.forEach(i=>{if(own(i)){pp(x,tf,i.fp);x.fill()}else foot(x,tf,i,ext(i))})}),L=tr(m);if(L.length)Bf=toShapes(L,1/R,bf.x0,bf.y1,false).shapes}
+ tag={kind:'base'};
  if(!noBase)add(ex(Bf,o.baseT),0,s.cb);
  /* Border builder: used for the main border and for borders that belong to a single border item. */
  const bboxOf=P=>P.reduce((a,p)=>({x0:Math.min(a.x0,p.x),x1:Math.max(a.x1,p.x),y0:Math.min(a.y0,p.y),y1:Math.max(a.y1,p.y)}),{x0:1e9,x1:-1e9,y0:1e9,y1:-1e9});
@@ -120,13 +122,15 @@ export async function buildKeychain(st) {
     if(gs.length)add(merge(gs),o.baseT,col)}}
  };
  const mainCuts=nb.map(i=>own(i)?{pts:hull(i.fp),x:0,y:0,gap:.05}:{pts:i.r.hull,x:i.x,y:i.y,gap:i.c.sp??.3});
+ tag={kind:'border'};
  if(!noBase)makeBorder(B,bs,o.bord,cd,mainCuts);
- ow.forEach(i=>makeBorder(i.fp,i.c.ob,+i.c.obw||1.2,i.c.obc||'#ffffff',[]));
+ ow.forEach(i=>{tag={kind:'item',id:i.c.id};makeBorder(i.fp,i.c.ob,+i.c.obw||1.2,i.c.obc||'#ffffff',[])});
  bk.forEach(i=>addR(i,o.baseT));
  if(o.hole>0){const ri=o.hole/2,ro=Math.max(o.osz,o.hole+1)/2,d=vert?[0,1]:[-1,0],c0=edge(B,d[0],d[1],cx,cy)+ro-(noBase?4:2.6),hl=s.rslope?o.rhl:o.rth,hr=s.rslope?o.rhr:o.rth,dep=Math.max(hl,hr),
    g=ex(ringShape(s.rso,ri,s.rsi,{l:o.rpl,r:o.rpr,t:o.rpt,b:o.rpb},(+s.rro||0),(+s.rri||0),ro),dep),pa=g.attributes.position;let x0=1e9,x1=-1e9;
   for(let i=0;i<pa.count;i++){x0=Math.min(x0,pa.getX(i));x1=Math.max(x1,pa.getX(i))}
   if(hl!=hr){for(let i=0;i<pa.count;i++)if(pa.getZ(i)>dep/2)pa.setZ(i,hl+(hr-hl)*((pa.getX(i)-x0)/((x1-x0)||1)));pa.needsUpdate=true;g.computeVertexNormals()}
+  tag={kind:'ring'};
   const kx=cx+d[0]*c0+(o.rml-o.rmr),ky=cy+d[1]*c0+(o.rmb-o.rmt),ax=+s.rkx||0,ay=+s.rky||0,az=+s.rkz||0,dz=(o.rzb||0)-(o.rzt||0);
   if(!(ax||ay||az||dz))add(g,0,s.cr,kx,ky,true);
   else{
@@ -136,7 +140,7 @@ export async function buildKeychain(st) {
    g.computeBoundingBox();const bx=g.boundingBox;let zmin=1e9;
    [bx.min.x,bx.max.x].forEach(x=>[bx.min.y,bx.max.y].forEach(y=>[bx.min.z,bx.max.z].forEach(z=>{zmin=Math.min(zmin,new THREE.Vector3(x,y,z).applyMatrix4(Mx).z)})));
    const mt=new THREE.MeshStandardMaterial({color:s.cr,roughness:.55});mt.polygonOffset=true;mt.polygonOffsetFactor=-1;mt.polygonOffsetUnits=-1;
-   const m=new THREE.Mesh(g,mt);m.matrixAutoUpdate=false;m.matrix.copy(new THREE.Matrix4().makeTranslation(kx,ky,dz-(ax||ay?zmin:0)).multiply(Mx));group.add(m)}}
+   const m=new THREE.Mesh(g,mt);m.matrixAutoUpdate=false;m.matrix.copy(new THREE.Matrix4().makeTranslation(kx,ky,dz-(ax||ay?zmin:0)).multiply(Mx));m.userData={...tag};group.add(m)}}
 
   group.updateMatrixWorld(true);
   const sz = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3());

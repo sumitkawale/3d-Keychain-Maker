@@ -3,9 +3,9 @@ import Section from '../ui/Section.jsx';
 import { SettingColor, SettingNumber, SettingSelect } from '../ui/fields.jsx';
 
 export default function BaseSection() {
-  const { settings } = useStore();
+  const { settings, selection } = useStore();
   return (
-    <Section title="Base">
+    <Section title="Base" focus={!!selection && selection.kind === 'base'} focusKey={selection} scroll>
       <SettingSelect
         k="shape"
         label="Base shape"

@@ -5,9 +5,9 @@ import { SettingCheck, SettingColor, SettingNumber, SettingRow, SettingSelect } 
 const SIDES = (prefix) => [['t', 'Top'], ['b', 'Bottom'], ['l', 'Left'], ['r', 'Right']].map(([s, t]) => [prefix + s, t]);
 
 export default function KeyringSection() {
-  const { settings } = useStore();
+  const { settings, selection } = useStore();
   return (
-    <Section title="Keyring hole">
+    <Section title="Keyring hole" focus={!!selection && selection.kind === 'ring'} focusKey={selection} scroll>
       <div className="row">
         <div>
           <SettingSelect
