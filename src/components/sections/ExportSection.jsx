@@ -35,12 +35,12 @@ export default function ExportSection() {
       <SettingSelect
         k="fmt"
         label="Export format"
-        options={[['3mf', '3MF (colours, slicer-ready)'], ['obj', 'OBJ + MTL (colours)'], ['stl', 'STL (full model + one STL per colour)']]}
+        options={[['3mf', '3MF for Bambu Studio / OrcaSlicer (colour parts)'], ['3mf-prusa', '3MF for PrusaSlicer'], ['obj', 'OBJ + MTL (colours)'], ['stl', 'STL (full model + one STL per colour)']]}
       />
       <div className="note">{model ? formatSize(model.size) : ''}</div>
       <button type="button" className="dl" onClick={download}><Icon name="download" size={18} /> Download (zip)</button>
       <div className="note">
-        3MF is one file with each colour as its own part, tagged with a filament number for PrusaSlicer, OrcaSlicer and Bambu Studio (set the filament colours there).
+        The Bambu Studio / OrcaSlicer 3MF has one part per colour, each with its own filament number (1, 2, 3 in colour order). Bambu Studio may say it is loading “geometry only”; the parts and filament numbers still come through, so check the filaments in the object list.
         OBJ keeps colours in an .mtl file. STL cannot hold colour, so you get the full model plus one STL per colour to load together as a multi-part object.
         The zip only holds the chosen format.
       </div>

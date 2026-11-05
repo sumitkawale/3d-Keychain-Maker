@@ -8,33 +8,38 @@ export default function KeyringSection() {
   const { settings, selection } = useStore();
   return (
     <Section title="Keyring hole" focus={!!selection && selection.kind === 'ring'} focusKey={selection} scroll>
-      <div className="row">
-        <div>
-          <SettingSelect
-            k="rso"
-            label="Outer shape"
-            options={[['circle', 'Circle'], ['heart', 'Heart'], ['flower', 'Flower'], ['rect', 'Rectangle'], ['pent', 'Pentagon'], ['hex', 'Hexagon']]}
-          />
-        </div>
-        <div>
-          <SettingSelect k="rsi" label="Hole shape" options={[['circle', 'Round'], ['rect', 'Rectangle'], ['pent', 'Pentagon'], ['hex', 'Hexagon']]} />
-        </div>
-      </div>
-      <SettingRow items={[['rro', 'Rotate outer shape (°)'], ['rri', 'Rotate hole (°)']]} />
-      <label>Rotate the whole keyring (°) around the X, Y and Z axes</label>
-      <SettingRow items={[['rkx', 'X'], ['rky', 'Y'], ['rkz', 'Z']]} />
-      <SettingNumber k="hole" />
-      <SettingNumber k="osz" />
-      <label>Hole padding (mm) — moves the hole away from that side, the outer shape keeps its size</label>
-      <SettingRow items={SIDES('rp')} />
-      <label>Move the whole keyring — outer shape and hole together (mm). Each value pushes it away from that side</label>
-      <SettingRow items={SIDES('rm')} />
-      <label>Move the whole keyring up / down (mm). Each value pushes it away from that side</label>
-      <SettingRow items={[['rzt', 'Z top'], ['rzb', 'Z bottom']]} />
-      <SettingNumber k="rth" />
-      <SettingCheck k="rslope">Slope: use different left / right heights</SettingCheck>
-      {settings.rslope && <SettingRow items={[['rhl', 'Left side height'], ['rhr', 'Right side height']]} />}
-      <SettingColor k="cr" label="Hole / ring colour" />
+      <SettingCheck k="ringOn">Add a keychain hole</SettingCheck>
+      {settings.ringOn && (
+        <>
+          <div className="row">
+            <div>
+              <SettingSelect
+                k="rso"
+                label="Outer shape"
+                options={[['circle', 'Circle'], ['heart', 'Heart'], ['flower', 'Flower'], ['rect', 'Rectangle'], ['pent', 'Pentagon'], ['hex', 'Hexagon']]}
+              />
+            </div>
+            <div>
+              <SettingSelect k="rsi" label="Hole shape" options={[['circle', 'Round'], ['rect', 'Rectangle'], ['pent', 'Pentagon'], ['hex', 'Hexagon']]} />
+            </div>
+          </div>
+          <SettingRow items={[['rro', 'Rotate outer shape (°)'], ['rri', 'Rotate hole (°)']]} />
+          <label>Rotate the whole keyring (°) around the X, Y and Z axes</label>
+          <SettingRow items={[['rkx', 'X'], ['rky', 'Y'], ['rkz', 'Z']]} />
+          <SettingNumber k="hole" />
+          <SettingNumber k="osz" />
+          <label>Hole padding (mm) — moves the hole away from that side, the outer shape keeps its size</label>
+          <SettingRow items={SIDES('rp')} />
+          <label>Move the whole keyring — outer shape and hole together (mm). Each value pushes it away from that side</label>
+          <SettingRow items={SIDES('rm')} />
+          <label>Move the whole keyring up / down (mm). Each value pushes it away from that side</label>
+          <SettingRow items={[['rzt', 'Z top'], ['rzb', 'Z bottom']]} />
+          <SettingNumber k="rth" />
+          <SettingCheck k="rslope">Slope: use different left / right heights</SettingCheck>
+          {settings.rslope && <SettingRow items={[['rhl', 'Left side height'], ['rhr', 'Right side height']]} />}
+          <SettingColor k="cr" label="Hole / ring colour" />
+        </>
+      )}
     </Section>
   );
 }

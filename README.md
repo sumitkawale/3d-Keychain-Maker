@@ -62,7 +62,7 @@ src/
     raster.js              Marching-squares tracing and canvas masks
     geometry.js            Text/SVG/PNG/STL/OBJ to geometry, base shapes, keyring shapes
     buildKeychain.js       Builds the whole keychain as a THREE.Group from the state
-    exporters.js           Zip writer, STL, OBJ + MTL and 3MF export
+    exporters.js           Zip writer, STL, OBJ + MTL and 3MF (Bambu / Orca and PrusaSlicer) export
     icons.js               Reads uploaded icon files
   components/
     HistoryPage.jsx        Saved keychains with previews (opened with #/history)
@@ -88,13 +88,14 @@ src/
 - Base thickness 0 removes the base and main border, leaving only your components with the keyring attached to them.
 - Base shapes: rounded rectangle, pill, oval, hexagon, or a contour that follows the content (Light / Regular / Hard).
 - Borders: solid, double, dashed, dotted, beaded; border icons and border text with position, rotation, padding, flip and "go around" mode.
-- Keyring hole: circle, heart, flower, rectangle, pentagon or hexagon outer shape; round, rectangle, pentagon or hexagon hole; rotation, padding, move, separate sizes, normal or sloped height.
+- Keyring hole: can be switched off with a checkbox; circle, heart, flower, rectangle, pentagon or hexagon outer shape; round, rectangle, pentagon or hexagon hole; rotation, padding, move, separate sizes, normal or sloped height.
 - Undo / redo (Ctrl/Cmd+Z, Ctrl+Y) and a New / clear button that can be undone.
+- A small X / Y / Z axis gizmo in the corner of the preview turns with the camera, so you always know which way the model is facing.
 - Click a part in the 3D preview to select it: the matching card or section is highlighted and scrolled into view in the panel. Right-drag pans the view across the XY plane, and double-click recentres it.
 - Auto-save to IndexedDB (survives refreshes), unique keychain IDs (`KC-XXXXXXXX`) where saving again updates the same entry, a History page with preview images, and shareable `.keychain.json` project files (save, open, import, rename, delete).
-- Export a zip: 3MF (each colour is a part with a filament number), OBJ + MTL, or STL (full model plus one STL per colour).
+- Export a zip: 3MF for Bambu Studio / OrcaSlicer (one part per colour, each with its own filament number), 3MF for PrusaSlicer, OBJ + MTL, or STL (full model plus one STL per colour).
 
 ## Notes
 
 - SVG shapes must be filled (stroke-only icons are skipped). PNGs are traced into one-colour shapes.
-- The 3MF filament numbers follow the order of colours in the model; set the real filament colours in your slicer.
+- The 3MF filament numbers follow the order of colours in the model (1, 2, 3 ...); set the real filament colours in your slicer. Bambu Studio may say it is loading "geometry only" for a 3MF it did not create; the colour parts and filament numbers still come through.

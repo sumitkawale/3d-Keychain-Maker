@@ -7,6 +7,68 @@ const clampRadius = (r) => Math.min(600, Math.max(15, r));
 const CLICK_SLOP = 4;
 const FOV = 40;
 
+/** Small X / Y / Z axis indicator that turns with the camera, drawn in a corner of the preview. */
+function makeGizmo() {
+  const scene = new THREE.Scene();
+  const label = (text, hex) => {
+    const c = document.createElement('canvas');
+    c.width = 64;
+    c.height = 64;
+    const x = c.getContext('2d');
+    x.fillStyle = `#${hex.toString(16).padStart(6, '0')}`;
+    x.font = 'bold 44px sans-serif';
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText(text, 32, 34);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
+    sp.scale.set(0.7, 0.7, 0.7);
+    sp.renderOrder = 4;
+    return sp;
+  };
+  // Soft round backdrop so the axes stay readable over the grid and the model.
+  const bg = document.createElement('canvas');
+  bg.width = 128;
+  bg.height = 128;
+  const bx = bg.getContext('2d');
+  bx.fillStyle = 'rgba(255,255,255,0.55)';
+  bx.beginPath();
+  bx.arc(64, 64, 62, 0, Math.PI * 0);
+  bx.fill();
+  const disc = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(bg), depthTest: false, transparent: true }));
+  disc.scale.set(3.7, 3.7, 3.7);
+  disc.renderOrder = 0;
+  scene.add(disc);
+  [
+    [new THREE.Vector3(1, 0, 0), 0xe5484d, 'X'],
+    [new THREE.Vector3(0, 1, 0), 0x30a46c, 'Y'],
+    [new THREE.Vector3(0, 0, 1), 0x3e63dd, 'Z'],
+  ].forEach(([dir, hex, text]) => {
+    const mat = new THREE.MeshBasicMaterial({ color: hex, depthTest: false, transparent: true });
+    const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.85, 12), mat);
+    shaft.quaternion.copy(quat);
+    shaft.position.copy(dir).multiplyScalar(0.425);
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.34, 16), mat);
+    head.quaternion.copy(quat);
+    head.position.copy(dir).multiplyScalar(1.02);
+    shaft.renderOrder = 2;
+    head.renderOrder = 2;
+    scene.add(shaft, head);
+    const sp = label(text, hex);
+    sp.position.copy(dir).multiplyScalar(1.5);
+    scene.add(sp);
+    const stub = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), dir.clone().multiplyScalar(-0.6)]),
+      new THREE.LineBasicMaterial({ color: hex, transparent: true, opacity: 0.35, depthTest: false }),
+    );
+    stub.renderOrder = 1;
+    scene.add(stub);
+  });
+  const camera = new THREE.OrthographicCamera(-1.85, 1.85, 1.85, -1.85, 0.1, 30);
+  camera.up.set(0, 0, 1);
+  return { scene, camera };
+}
+
 function disposeGroup(group) {
   group.children.forEach((m) => { m.geometry.dispose(); m.material.dispose(); });
 }
@@ -52,6 +114,7 @@ export default function Viewport() {
     grid.material.transparent = true;
     grid.material.opacity = 0.25;
     scene.add(grid);
+    const gizmo = makeGizmo();
 
     const view = { th: -Math.PI / 2, ph: 0.7, rad: 90, tx: 0, ty: 0, group: null, fitted: false };
     const draw = () => {
@@ -61,7 +124,24 @@ export default function Viewport() {
         view.rad * Math.cos(view.ph),
       );
       camera.lookAt(view.tx, view.ty, 0);
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      renderer.setScissorTest(false);
+      renderer.setViewport(0, 0, w, h);
+      renderer.autoClear = true;
       renderer.render(scene, camera);
+      // Axis indicator in the bottom-right corner, looking from the same direction as the main camera.
+      const g = Math.round(Math.min(150, Math.max(96, Math.min(w, h) * 0.18)));
+      renderer.setScissorTest(true);
+      renderer.setViewport(w - g - 10, 10, g, g);
+      renderer.setScissor(w - g - 10, 10, g, g);
+      renderer.autoClear = false;
+      renderer.clearDepth();
+      gizmo.camera.position.set(Math.sin(view.ph) * Math.cos(view.th), Math.sin(view.ph) * Math.sin(view.th), Math.cos(view.ph)).multiplyScalar(8);
+      gizmo.camera.lookAt(0, 0, 0);
+      renderer.render(gizmo.scene, gizmo.camera);
+      renderer.autoClear = true;
+      renderer.setScissorTest(false);
     };
     const resize = () => {
       const r = canvas.parentElement.getBoundingClientRect();
@@ -174,7 +254,7 @@ export default function Viewport() {
     <div className="stage">
       <canvas ref={canvasRef} />
       <div className="dims">{model ? formatSize(model.size) : ''}</div>
-      <div className="hint">Drag to rotate · right-drag to pan · scroll or pinch to zoom · click a part to select it</div>
+      <div className="hint">Drag to rotate · right-drag to pan · scroll or pinch to zoom · click a part to select it · the corner gizmo shows the X, Y and Z axes</div>
     </div>
   );
 }

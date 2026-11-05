@@ -44,6 +44,8 @@ export function buildExportFiles(group, settings, comps) {
   const slug = clean(settings.kname) || clean(firstText && firstText.text.split('\n')[0]) || 'keychain';
   const files = [];
   if (settings.fmt === '3mf') {
+    files.push({ name: slug + '.3mf', data: mf3bambu(by, slug) });
+  } else if (settings.fmt === '3mf-prusa') {
     files.push({ name: slug + '.3mf', data: mf3b(by, slug) });
   } else if (settings.fmt === 'obj') {
     const r = objOf(by, slug);
@@ -70,3 +72,46 @@ export function downloadBlob(data, filename, type = 'application/octet-stream') 
 }
 
 export const downloadZip = (data, filename) => downloadBlob(data, filename, 'application/zip');
+
+/**
+ * 3MF for Bambu Studio / OrcaSlicer: one object made of one part per colour. Each part is its own mesh with a
+ * display colour, and model_settings.config gives every part a filament (extruder) number, which is how these
+ * slicers pick up multi-colour models.
+ */
+export function mf3bambu(by, name) {
+  const H = '<?xml version="1.0" encoding="UTF-8"?>';
+  const f4 = (n) => n.toFixed(4);
+  const cols = [...by.keys()];
+  const mats = cols.map((h) => `<base name="#${h.toUpperCase()}" displaycolor="#${h.toUpperCase()}"/>`).join('');
+  const objects = [];
+  const parts = [];
+  cols.forEach((h, ci) => {
+    const vm = new Map();
+    const vs = [];
+    const ts = [];
+    const vi = (q) => {
+      const k = `${f4(q.x)} ${f4(q.y)} ${f4(q.z)}`;
+      let n = vm.get(k);
+      if (n === undefined) { n = vs.length; vm.set(k, n); vs.push(`<vertex x="${f4(q.x)}" y="${f4(q.y)}" z="${f4(q.z)}"/>`); }
+      return n;
+    };
+    meshTris(by.get(h)).forEach((t) => {
+      const a = vi(t[0]);
+      const b = vi(t[1]);
+      const c = vi(t[2]);
+      if (a !== b && b !== c && a !== c) ts.push(`<triangle v1="${a}" v2="${b}" v3="${c}"/>`);
+    });
+    const id = ci + 2;
+    parts.push({ id, h, ext: ci + 1 });
+    objects.push(`<object id="${id}" type="model" pid="1" pindex="${ci}" name="colour-${h}"><mesh><vertices>${vs.join('')}</vertices><triangles>${ts.join('')}</triangles></mesh></object>`);
+  });
+  const parentId = cols.length + 2;
+  const model = `${H}<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021"><metadata name="Application">BambuStudio-02.00.00.00</metadata><metadata name="BambuStudio:3mfVersion">1</metadata><metadata name="Title">${name}</metadata><resources><basematerials id="1">${mats}</basematerials>${objects.join('')}<object id="${parentId}" type="model" name="${name}"><components>${parts.map((p) => `<component objectid="${p.id}"/>`).join('')}</components></object></resources><build><item objectid="${parentId}" transform="1 0 0 0 1 0 0 0 1 128 128 0" printable="1"/></build></model>`;
+  const settings = `${H}<config><object id="${parentId}"><metadata key="name" value="${name}"/><metadata key="extruder" value="1"/>${parts.map((p) => `<part id="${p.id}" subtype="normal_part"><metadata key="name" value="colour-${p.h}"/><metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/><metadata key="extruder" value="${p.ext}"/></part>`).join('')}</object><plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value=""/><metadata key="locked" value="false"/><model_instance><metadata key="object_id" value="${parentId}"/><metadata key="instance_id" value="0"/><metadata key="identify_id" value="1"/></model_instance></plate></config>`;
+  return zipMulti([
+    { name: '[Content_Types].xml', data: enc(`${H}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="config" ContentType="text/xml"/></Types>`) },
+    { name: '_rels/.rels', data: enc(`${H}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>`) },
+    { name: '3D/3dmodel.model', data: enc(model) },
+    { name: 'Metadata/model_settings.config', data: enc(settings) },
+  ]);
+}

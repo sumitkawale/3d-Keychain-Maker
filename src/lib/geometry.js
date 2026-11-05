@@ -88,7 +88,7 @@ const a=(c.rot||0)*PI/180,ax=(c.rx||0)*PI/180,ay=(c.ry||0)*PI/180;
   r.sh=bot.map(pts=>new THREE.Shape(pts.map(p=>V(p.x-cx,p.y-cy))));r.extra=top.map(p=>V(p.x-cx,p.y-cy));
   r.w=x1-x0;r.h=y1-y0;
  }else if(a){const cs=Math.cos(a),sn=Math.sin(a),f=p=>V(p.x*cs-p.y*sn,p.x*sn+p.y*cs);r.geos.forEach(g=>g.geo.rotateZ(a));r.sh=r.sh.map(s=>new THREE.Shape(s.getPoints().map(f)));
-  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;r.sh.forEach(s=>s.getPoints().forEach(p=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}));r.w=x1-x0;r.h=y1-y0}
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;r.sh.forEach(s=>s.getPoints().forEach(p=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y)}));const cx=(x0+x1)/2,cy=(y0+y1)/2;r.geos.forEach(g=>g.geo.translate(-cx,-cy,0));r.sh=r.sh.map(s=>new THREE.Shape(s.getPoints().map(p=>V(p.x-cx,p.y-cy))));r.w=x1-x0;r.h=y1-y0}
  r.hull=hull(r.sh.flatMap(s=>s.getPoints()).concat(r.extra||[]));return r}
 export function gen0(c){
  try{if(c.type=='text'){const t=textOutlines(c.text,fcss(c.font),c.size);return t&&{geos:[{geo:new THREE.ExtrudeGeometry(t.shapes,X(c.height)),col:null}],w:t.w,h:t.h,sh:t.shapes}}

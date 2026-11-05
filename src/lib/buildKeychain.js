@@ -126,7 +126,7 @@ export async function buildKeychain(st) {
  if(!noBase)makeBorder(B,bs,o.bord,cd,mainCuts);
  ow.forEach(i=>{tag={kind:'item',id:i.c.id};makeBorder(i.fp,i.c.ob,+i.c.obw||1.2,i.c.obc||'#ffffff',[])});
  bk.forEach(i=>addR(i,o.baseT));
- if(o.hole>0){const ri=o.hole/2,ro=Math.max(o.osz,o.hole+1)/2,d=vert?[0,1]:[-1,0],c0=edge(B,d[0],d[1],cx,cy)+ro-(noBase?4:2.6),hl=s.rslope?o.rhl:o.rth,hr=s.rslope?o.rhr:o.rth,dep=Math.max(hl,hr),
+ if(s.ringOn&&o.hole>0){const ri=o.hole/2,ro=Math.max(o.osz,o.hole+1)/2,d=vert?[0,1]:[-1,0],c0=edge(B,d[0],d[1],cx,cy)+ro-(noBase?4:2.6),hl=s.rslope?o.rhl:o.rth,hr=s.rslope?o.rhr:o.rth,dep=Math.max(hl,hr),
    g=ex(ringShape(s.rso,ri,s.rsi,{l:o.rpl,r:o.rpr,t:o.rpt,b:o.rpb},(+s.rro||0),(+s.rri||0),ro),dep),pa=g.attributes.position;let x0=1e9,x1=-1e9;
   for(let i=0;i<pa.count;i++){x0=Math.min(x0,pa.getX(i));x1=Math.max(x1,pa.getX(i))}
   if(hl!=hr){for(let i=0;i<pa.count;i++)if(pa.getZ(i)>dep/2)pa.setZ(i,hl+(hr-hl)*((pa.getX(i)-x0)/((x1-x0)||1)));pa.needsUpdate=true;g.computeVertexNormals()}

@@ -35,7 +35,7 @@ export const FIELDS = {
 };
 
 export const DEFAULT_SETTINGS = {
-  dir: 'h', shape: 'cont', cs: 'reg', bs: 'solid', fillb: true,
+  dir: 'h', shape: 'cont', cs: 'reg', bs: 'solid', fillb: true, ringOn: true,
   cb: '#000000', cd: '#ffffff', cr: '#000000',
   rso: 'circle', rsi: 'circle', rslope: false,
   kname: '', fmt: '3mf',
