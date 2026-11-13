@@ -152,9 +152,9 @@ export default function ItemCard({ node, border = false, dragging = false }) {
       <label>Height (mm)</label>
       <NumberField value={node.height} min={0.2} step={0.2} positive onChange={(v) => up({ height: v }, true)} />
 
-      {node.type === 'svg' && (
+      {(node.type === 'svg' || node.hasColor) && (
         <button type="button" className="sec wide" onClick={() => up({ recolor: false })}>
-          <Icon name="palette" /> Use original SVG colours
+          <Icon name="palette" /> Use original colours
         </button>
       )}
 

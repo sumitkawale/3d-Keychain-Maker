@@ -31,15 +31,31 @@ export function svgGeo(c){
  sh.forEach(s=>{const o=new THREE.Shape(s.shape.map(m));s.holes.forEach(h=>o.holes.push(new THREE.Path(h.map(m))));const key=String(s.col);if(!by.has(key))by.set(key,{col:s.col,l:[]});by.get(key).l.push(o);all.push(o)});
  return{geos:[...by.values()].map(v=>({geo:new THREE.ExtrudeGeometry(v.l,X(c.height)),col:v.col?'#'+v.col:null})),w:(b-a)*k,h:c.size,sh:all};
 }
+/** Binary STL can carry a per-triangle colour in the attribute bytes (5 bits each of R, G, B, bit 15 = colour set). */
+const rgb5=(a)=>{const h=(v)=>Math.round(v*255/31).toString(16).padStart(2,'0');return '#'+h(a&31)+h((a>>5)&31)+h((a>>10)&31)};
+export function stlHasColor(buf){
+ if(buf.byteLength<=84)return false;
+ const dv=new DataView(buf),n=dv.getUint32(80,true);
+ if(buf.byteLength!==84+n*50)return false;
+ for(let i=0;i<n;i++)if(dv.getUint16(84+i*50+48,true)&0x8000)return true;
+ return false;
+}
 export function stlGeo(c){
- const buf=c.data,dv=new DataView(buf),n=buf.byteLength>84?dv.getUint32(80,true):0,pos=[];
- if(buf.byteLength===84+n*50){for(let i=0;i<n;i++)for(let j=0;j<3;j++){const o=84+i*50+12+j*12;pos.push(dv.getFloat32(o,true),dv.getFloat32(o+4,true),dv.getFloat32(o+8,true))}}
+ const buf=c.data,dv=new DataView(buf),n=buf.byteLength>84?dv.getUint32(80,true):0,pos=[],tc=[];
+ if(buf.byteLength===84+n*50){for(let i=0;i<n;i++){for(let j=0;j<3;j++){const o=84+i*50+12+j*12;pos.push(dv.getFloat32(o,true),dv.getFloat32(o+4,true),dv.getFloat32(o+8,true))}const at=dv.getUint16(84+i*50+48,true);tc.push(at&0x8000?rgb5(at):null)}}
  else for(const m of new TextDecoder().decode(buf).matchAll(/vertex\s+(\S+)\s+(\S+)\s+(\S+)/g))pos.push(+m[1],+m[2],+m[3]);
  if(pos.length<9)return null;
- const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeBoundingBox();
- const bb=g.boundingBox,k=c.size/((bb.max.y-bb.min.y)||1),w=(bb.max.x-bb.min.x)*k;
- g.translate(-(bb.min.x+bb.max.x)/2,-(bb.min.y+bb.max.y)/2,-bb.min.z);g.scale(k,k,k);g.computeVertexNormals();
- return{geos:[{geo:g,col:null}],w,h:c.size,sh:[new THREE.Shape([V(-w/2,-c.size/2),V(w/2,-c.size/2),V(w/2,c.size/2),V(-w/2,c.size/2)])]};
+ const all=new THREE.BufferGeometry();all.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));all.computeBoundingBox();
+ const bb=all.boundingBox,k=c.size/((bb.max.y-bb.min.y)||1),w=(bb.max.x-bb.min.x)*k,cx=(bb.min.x+bb.max.x)/2,cy=(bb.min.y+bb.max.y)/2;
+ const make=(arr)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));g.translate(-cx,-cy,-bb.min.z);g.scale(k,k,k);g.computeVertexNormals();return g};
+ let geos;
+ if(tc.some((x)=>x)){
+  /* One geometry per embedded colour, so the colours show up (and export as separate parts) until you pick a colour yourself. */
+  const by=new Map();
+  tc.forEach((col,i)=>{const key=col||'';if(!by.has(key))by.set(key,[]);const arr=by.get(key);for(let j=0;j<9;j++)arr.push(pos[i*9+j])});
+  geos=[...by].map(([key,arr])=>({geo:make(arr),col:key||null}));
+ }else geos=[{geo:make(pos),col:null}];
+ return{geos,w,h:c.size,sh:[new THREE.Shape([V(-w/2,-c.size/2),V(w/2,-c.size/2),V(w/2,c.size/2),V(-w/2,c.size/2)])]};
 }
 export function objGeo(c){const v=[],pos=[];for(const l of c.data.split(/\r?\n/)){const p=l.trim().split(/\s+/);if(p[0]=='v')v.push([+p[1],+p[2],+p[3]]);else if(p[0]=='f'){const ix=p.slice(1).map(s=>{const i=parseInt(s);return i<0?v.length+i:i-1});for(let k=1;k<ix.length-1;k++)[ix[0],ix[k],ix[k+1]].forEach(i=>pos.push(...v[i]))}}
  if(pos.length<9)return null;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeBoundingBox();
@@ -106,3 +122,57 @@ export function mk(type,w,h){
 }
 export function edge(poly,dx,dy,ox,oy){let best=1e9;for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],ax=a.x-ox,ay=a.y-oy,ex=b.x-a.x,ey=b.y-a.y,den=dx*ey-dy*ex;if(Math.abs(den)<1e-9)continue;const t=(ax*ey-ay*ex)/den,u=(ax*dy-ay*dx)/den;if(t>0&&u>=0&&u<=1&&t<best)best=t}return best<1e8?best:0}
 export const merge=a=>{const P=[],N=[];a.forEach(g=>{P.push(...g.attributes.position.array);N.push(...g.attributes.normal.array)});const m=new THREE.BufferGeometry();m.setAttribute('position',new THREE.Float32BufferAttribute(P,3));m.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));return m};
+
+/**
+ * Ring with rounded edges. Builds the ring as a loft of offset outlines (outer contour and holes) with a
+ * quarter-circle profile on each of the four edges: top/bottom x outer/hole. `hl`/`hr` are the left/right
+ * heights (a slope when different). Radii are limited so they always fit the ring height and wall width.
+ */
+export function roundedRing(shape,o){
+ const N=8,div=48;
+ const dedupe=(pts)=>{const a=pts.slice();if(a.length>1&&a[0].distanceTo(a[a.length-1])<1e-6)a.pop();return a};
+ const area=(p)=>{let t=0;for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];t+=a.x*b.y-b.x*a.y}return t/2};
+ const outer=dedupe(shape.getPoints(div));if(area(outer)<0)outer.reverse();
+ const holes=shape.holes.map((h)=>{const p=dedupe(h.getPoints(div));if(area(p)>0)p.reverse();return p});
+ let x0=1e9,x1=-1e9;outer.forEach((p)=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x)});
+ const H=(x)=>o.hl+(o.hr-o.hl)*((x-x0)/((x1-x0)||1));
+ /* Wall width between the outer outline and the holes, to keep the rounding inside the material. */
+ let wall=1e9;holes.forEach((h)=>h.forEach((p)=>outer.forEach((q)=>{wall=Math.min(wall,Math.hypot(p.x-q.x,p.y-q.y))})));
+ const cap0=Math.max(0,Math.min(Math.min(o.hl,o.hr)/2,wall/2*0.98));
+ const rr=(v)=>Math.max(0,Math.min(+v||0,cap0));
+ /* Per-vertex direction toward the material (left of the edge), with a limited mitre for corners. */
+ const dirs=(p)=>p.map((q,i)=>{
+  const a=p[(i+p.length-1)%p.length],b=p[(i+1)%p.length];
+  const e1=new THREE.Vector2(q.x-a.x,q.y-a.y).normalize(),e2=new THREE.Vector2(b.x-q.x,b.y-q.y).normalize();
+  const n1=new THREE.Vector2(-e1.y,e1.x),n2=new THREE.Vector2(-e2.y,e2.x),m=n1.clone().add(n2),l=m.length();
+  if(l<1e-6)return n1;m.divideScalar(l);return m.multiplyScalar(1/Math.max(0.4,m.dot(n1)));
+ });
+ const layers=(rb,rt,Hv)=>{
+  const L=[];
+  if(rb>0){for(let k=0;k<=N;k++){const th=(1-k/N)*Math.PI/2;L.push({z:rb*(1-Math.sin(th)),off:rb*(1-Math.cos(th))})}}else L.push({z:0,off:0});
+  if(rt>0){for(let k=0;k<=N;k++){const th=(k/N)*Math.PI/2;L.push({z:Hv-rt+rt*Math.sin(th),off:rt*(1-Math.cos(th))})}}else L.push({z:Hv,off:0});
+  return L;
+ };
+ const P=[],I=[],vtx=(v)=>{P.push(v.x,v.y,v.z);return P.length/3-1};
+ const side=(poly,rb,rt)=>{
+  const d=dirs(poly),LV=poly.map((p)=>layers(rb,rt,H(p.x))),K=LV[0].length;
+  const at=(i,k)=>new THREE.Vector3(poly[i].x+d[i].x*LV[i][k].off,poly[i].y+d[i].y*LV[i][k].off,LV[i][k].z);
+  const grid=poly.map((p,i)=>LV[i].map((l,k)=>vtx(at(i,k))));
+  for(let k=0;k<K-1;k++)for(let i=0;i<poly.length;i++){const j=(i+1)%poly.length,a=grid[i][k],b=grid[j][k],c=grid[j][k+1],e=grid[i][k+1];I.push(a,b,c,a,c,e)}
+  return{top:poly.map((p,i)=>at(i,K-1)),bot:poly.map((p,i)=>at(i,0))};
+ };
+ const cap=(rings,up)=>{
+  const pts2=rings.map((r)=>r.map((v)=>new THREE.Vector2(v.x,v.y)));
+  const faces=THREE.ShapeUtils.triangulateShape(pts2[0],pts2.slice(1)),all=rings.flat(),base=P.length/3;
+  all.forEach((v)=>vtx(v));
+  faces.forEach((f)=>{let[a,b,c]=f;const A=all[a],B=all[b],C=all[c],ar=(B.x-A.x)*(C.y-A.y)-(B.y-A.y)*(C.x-A.x);if((ar>0)!==up){const t=b;b=c;c=t}I.push(base+a,base+b,base+c)});
+ };
+ const so=side(outer,rr(o.rbo),rr(o.rto)),sh=holes.map((h)=>side(h,rr(o.rbh),rr(o.rth)));
+ cap([so.top,...sh.map((h)=>h.top)],true);
+ cap([so.bot,...sh.map((h)=>h.bot)],false);
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+ g.setIndex(I);
+ g.computeVertexNormals();
+ return g;
+}

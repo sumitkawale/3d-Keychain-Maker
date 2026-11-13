@@ -32,10 +32,13 @@ export const FIELDS = {
   rro: { step: 5, def: 0 }, rri: { step: 5, def: 0 },
   rkx: { step: 5, def: 0 }, rky: { step: 5, def: 0 }, rkz: { step: 5, def: 0 },
   rzt: { min: -100, step: 0.5, def: 0 }, rzb: { min: -100, step: 0.5, def: 0 },
+  rrs: { min: 0, step: 0.1, def: 0 },
+  rrto: { min: 0, step: 0.1, def: 0 }, rrth: { min: 0, step: 0.1, def: 0 },
+  rrbo: { min: 0, step: 0.1, def: 0 }, rrbh: { min: 0, step: 0.1, def: 0 },
 };
 
 export const DEFAULT_SETTINGS = {
-  dir: 'h', shape: 'cont', cs: 'reg', bs: 'solid', fillb: true, ringOn: true,
+  dir: 'h', shape: 'cont', cs: 'reg', bs: 'solid', fillb: true, ringOn: true, radv: false,
   cb: '#000000', cd: '#ffffff', cr: '#000000',
   rso: 'circle', rsi: 'circle', rslope: false,
   kname: '', fmt: '3mf',

@@ -35,6 +35,15 @@ export default function KeyringSection() {
           <label>Move the whole keyring up / down (mm). Each value pushes it away from that side</label>
           <SettingRow items={[['rzt', 'Z top'], ['rzb', 'Z bottom']]} />
           <SettingNumber k="rth" />
+          <SettingCheck k="radv">Advanced: set the rounding of each edge separately</SettingCheck>
+          {!settings.radv && <SettingNumber k="rrs" label="Edge rounding radius (mm) — smooths the flat top and bottom edges so it looks like a real ring" />}
+          {settings.radv && (
+            <>
+              <label>Rounding radius per edge (mm). Each is limited to half the ring height and half the wall width</label>
+              <SettingRow items={[['rrto', 'Top, outer edge'], ['rrth', 'Top, hole edge']]} />
+              <SettingRow items={[['rrbo', 'Bottom, outer edge'], ['rrbh', 'Bottom, hole edge']]} />
+            </>
+          )}
           <SettingCheck k="rslope">Slope: use different left / right heights</SettingCheck>
           {settings.rslope && <SettingRow items={[['rhl', 'Left side height'], ['rhr', 'Right side height']]} />}
           <SettingColor k="cr" label="Hole / ring colour" />

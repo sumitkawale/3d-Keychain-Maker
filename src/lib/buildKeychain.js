@@ -3,7 +3,7 @@ import { FIELDS, PI, PS, R, num } from './constants.js';
 import { fcss } from './fonts.js';
 import { flat } from '../state/tree.js';
 import { mask, pp, tr, toShapes } from './raster.js';
-import { V, X, edge, gen, hull, inHull, merge, mk, ringShape } from './geometry.js';
+import { V, X, edge, gen, hull, inHull, merge, mk, ringShape, roundedRing } from './geometry.js';
 
 /**
  * Builds the whole keychain (base, components, border, border items, keyring) as a THREE.Group.
@@ -127,9 +127,14 @@ export async function buildKeychain(st) {
  ow.forEach(i=>{tag={kind:'item',id:i.c.id};makeBorder(i.fp,i.c.ob,+i.c.obw||1.2,i.c.obc||'#ffffff',[])});
  bk.forEach(i=>addR(i,o.baseT));
  if(s.ringOn&&o.hole>0){const ri=o.hole/2,ro=Math.max(o.osz,o.hole+1)/2,d=vert?[0,1]:[-1,0],c0=edge(B,d[0],d[1],cx,cy)+ro-(noBase?4:2.6),hl=s.rslope?o.rhl:o.rth,hr=s.rslope?o.rhr:o.rth,dep=Math.max(hl,hr),
-   g=ex(ringShape(s.rso,ri,s.rsi,{l:o.rpl,r:o.rpr,t:o.rpt,b:o.rpb},(+s.rro||0),(+s.rri||0),ro),dep),pa=g.attributes.position;let x0=1e9,x1=-1e9;
-  for(let i=0;i<pa.count;i++){x0=Math.min(x0,pa.getX(i));x1=Math.max(x1,pa.getX(i))}
-  if(hl!=hr){for(let i=0;i<pa.count;i++)if(pa.getZ(i)>dep/2)pa.setZ(i,hl+(hr-hl)*((pa.getX(i)-x0)/((x1-x0)||1)));pa.needsUpdate=true;g.computeVertexNormals()}
+   shape=ringShape(s.rso,ri,s.rsi,{l:o.rpl,r:o.rpr,t:o.rpt,b:o.rpb},(+s.rro||0),(+s.rri||0),ro),radii=s.radv?[o.rrbo,o.rrbh,o.rrto,o.rrth]:[o.rrs,o.rrs,o.rrs,o.rrs];
+  let g;
+  if(radii.some(r=>r>0))g=roundedRing(shape,{hl,hr,rbo:radii[0],rbh:radii[1],rto:radii[2],rth:radii[3]});
+  else{
+   g=ex(shape,dep);const pa=g.attributes.position;let x0=1e9,x1=-1e9;
+   for(let i=0;i<pa.count;i++){x0=Math.min(x0,pa.getX(i));x1=Math.max(x1,pa.getX(i))}
+   if(hl!=hr){for(let i=0;i<pa.count;i++)if(pa.getZ(i)>dep/2)pa.setZ(i,hl+(hr-hl)*((pa.getX(i)-x0)/((x1-x0)||1)));pa.needsUpdate=true;g.computeVertexNormals()}
+  }
   tag={kind:'ring'};
   const kx=cx+d[0]*c0+(o.rml-o.rmr),ky=cy+d[1]*c0+(o.rmb-o.rmt),ax=+s.rkx||0,ay=+s.rky||0,az=+s.rkz||0,dz=(o.rzb||0)-(o.rzt||0);
   if(!(ax||ay||az||dz))add(g,0,s.cr,kx,ky,true);

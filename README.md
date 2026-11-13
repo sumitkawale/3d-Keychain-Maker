@@ -88,7 +88,7 @@ src/
 - Base thickness 0 removes the base and main border, leaving only your components with the keyring attached to them.
 - Base shapes: rounded rectangle, pill, oval, hexagon, or a contour that follows the content (Light / Regular / Hard).
 - Borders: solid, double, dashed, dotted, beaded; border icons and border text with position, rotation, padding, flip and "go around" mode.
-- Keyring hole: can be switched off with a checkbox; circle, heart, flower, rectangle, pentagon or hexagon outer shape; round, rectangle, pentagon or hexagon hole; rotation, padding, move, separate sizes, normal or sloped height.
+- Keyring hole: rounded edges (one radius, or an advanced mode with a radius for the top / bottom and outer / hole edges) so it looks like a real ring; can be switched off with a checkbox; circle, heart, flower, rectangle, pentagon or hexagon outer shape; round, rectangle, pentagon or hexagon hole; rotation, padding, move, separate sizes, normal or sloped height.
 - Undo / redo (Ctrl/Cmd+Z, Ctrl+Y) and a New / clear button that can be undone.
 - A small X / Y / Z axis gizmo in the corner of the preview turns with the camera, so you always know which way the model is facing.
 - Click a part in the 3D preview to select it: the matching card or section is highlighted and scrolled into view in the panel. Right-drag pans the view across the XY plane, and double-click recentres it.
@@ -98,4 +98,5 @@ src/
 ## Notes
 
 - SVG shapes must be filled (stroke-only icons are skipped). PNGs are traced into one-colour shapes.
+- STL files normally have no colour. If a binary STL stores per-triangle colours (the common 5-bit RGB attribute), they are kept until you pick a colour yourself, and "Use original colours" brings them back.
 - The 3MF filament numbers follow the order of colours in the model (1, 2, 3 ...); set the real filament colours in your slicer. Bambu Studio may say it is loading "geometry only" for a 3MF it did not create; the colour parts and filament numbers still come through.
