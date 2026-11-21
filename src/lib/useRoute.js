@@ -8,8 +8,11 @@ export function useRoute() {
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
   }, []);
-  return hash.startsWith('#/history') ? 'history' : 'editor';
+  if (hash.startsWith('#/history')) return 'history';
+  if (hash.startsWith('#/settings')) return 'settings';
+  return 'editor';
 }
 
 export const goHistory = () => { window.location.hash = '#/history'; };
+export const goSettings = () => { window.location.hash = '#/settings'; };
 export const goEditor = () => { window.location.hash = '#/'; };

@@ -39,7 +39,7 @@ export default function ComponentsSection() {
           : <ItemCard key={n.id} node={n} dragging={dragId === n.id} />))}
       </div>
       <div className="row">
-        <button type="button" className="sec" onClick={() => actions.addItem({ type: 'text', text: 'Text', font: getLastFont(), size: 12 })}><Icon name="type" /> Add text</button>
+        <button type="button" className="sec" onClick={() => actions.addItem({ type: 'text', text: 'Text', font: getLastFont() })}><Icon name="type" /> Add text</button>
         <button type="button" className="sec" onClick={() => fileRef.current.click()}><Icon name="image" /> Add icon (SVG / PNG / STL / OBJ)</button>
       </div>
       <button type="button" className="sec wide" onClick={() => actions.addGroup()}><Icon name="folder" /> Add group (parent for several components)</button>

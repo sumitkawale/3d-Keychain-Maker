@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { FIELDS } from '../../lib/constants.js';
 import { useStore } from '../../state/StoreContext.jsx';
 
@@ -36,21 +36,32 @@ export function Field({ label, children }) {
 
 /* ---- fields bound to a global setting ---- */
 
-export function SettingNumber({ k, label }) {
+/**
+ * By default the setting fields read and write the keychain being edited. The Settings page wraps them in a
+ * BindingContext so the very same fields edit a settings preset instead.
+ */
+export const BindingContext = createContext(null);
+export function useBinding() {
   const { settings, actions } = useStore();
+  const b = useContext(BindingContext);
+  return b || { settings, set: actions.setSetting };
+}
+
+export function SettingNumber({ k, label }) {
+  const { settings, set } = useBinding();
   const f = FIELDS[k];
   return (
     <Field label={label === undefined ? f.label : label}>
-      <NumberField value={settings[k]} min={f.min} step={f.step} onChange={(v) => actions.setSetting(k, v, true)} />
+      <NumberField value={settings[k]} min={f.min} step={f.step} onChange={(v) => set(k, v, true)} />
     </Field>
   );
 }
 
 export function SettingSelect({ k, label, options, disabled = false }) {
-  const { settings, actions } = useStore();
+  const { settings, set } = useBinding();
   return (
     <Field label={label}>
-      <select value={settings[k]} disabled={disabled} onChange={(e) => actions.setSetting(k, e.target.value)}>
+      <select value={settings[k]} disabled={disabled} onChange={(e) => set(k, e.target.value)}>
         {options.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
       </select>
     </Field>
@@ -58,19 +69,19 @@ export function SettingSelect({ k, label, options, disabled = false }) {
 }
 
 export function SettingColor({ k, label }) {
-  const { settings, actions } = useStore();
+  const { settings, set } = useBinding();
   return (
     <Field label={label}>
-      <input type="color" value={settings[k]} onChange={(e) => actions.setSetting(k, e.target.value, true)} />
+      <input type="color" value={settings[k]} onChange={(e) => set(k, e.target.value, true)} />
     </Field>
   );
 }
 
 export function SettingCheck({ k, children }) {
-  const { settings, actions } = useStore();
+  const { settings, set } = useBinding();
   return (
     <label className="ck">
-      <input type="checkbox" checked={settings[k]} onChange={(e) => actions.setSetting(k, e.target.checked)} /> {children}
+      <input type="checkbox" checked={settings[k]} onChange={(e) => set(k, e.target.checked)} /> {children}
     </label>
   );
 }

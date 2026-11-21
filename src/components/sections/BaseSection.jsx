@@ -1,9 +1,10 @@
 import { useStore } from '../../state/StoreContext.jsx';
 import Section from '../ui/Section.jsx';
-import { SettingColor, SettingNumber, SettingSelect } from '../ui/fields.jsx';
+import { SettingColor, SettingNumber, SettingSelect, useBinding } from '../ui/fields.jsx';
 
 export default function BaseSection() {
-  const { settings, selection } = useStore();
+  const { selection } = useStore();
+  const { settings } = useBinding();
   return (
     <Section title="Base" focus={!!selection && selection.kind === 'base'} focusKey={selection} scroll>
       <SettingSelect

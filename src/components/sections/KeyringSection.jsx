@@ -1,11 +1,12 @@
 import { useStore } from '../../state/StoreContext.jsx';
 import Section from '../ui/Section.jsx';
-import { SettingCheck, SettingColor, SettingNumber, SettingRow, SettingSelect } from '../ui/fields.jsx';
+import { SettingCheck, SettingColor, SettingNumber, SettingRow, SettingSelect, useBinding } from '../ui/fields.jsx';
 
 const SIDES = (prefix) => [['t', 'Top'], ['b', 'Bottom'], ['l', 'Left'], ['r', 'Right']].map(([s, t]) => [prefix + s, t]);
 
 export default function KeyringSection() {
-  const { settings, selection } = useStore();
+  const { selection } = useStore();
+  const { settings } = useBinding();
   return (
     <Section title="Keyring hole" focus={!!selection && selection.kind === 'ring'} focusKey={selection} scroll>
       <SettingCheck k="ringOn">Add a keychain hole</SettingCheck>

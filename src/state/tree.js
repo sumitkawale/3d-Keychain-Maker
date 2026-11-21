@@ -1,4 +1,5 @@
 import { PALETTE } from '../lib/constants.js';
+import { getItemDefaults } from '../lib/presets.js';
 
 let uid = 1;
 export const nextId = () => ++uid;
@@ -19,11 +20,12 @@ export const findNode = (list, id) => flat(list).find((n) => n.id === id);
 /** Creates an item with the default look for main components or border items. */
 export function makeItem(c, border = false) {
   const id = nextId();
+  const d = getItemDefaults();
   return {
     id,
-    size: border ? (c.type === 'text' ? 6 : 8) : 12,
-    height: 1.2,
-    color: c.type === 'text' ? '#ffffff' : PALETTE[id % PALETTE.length],
+    size: border ? (c.type === 'text' ? d.borderTextSize : d.borderIconSize) : (c.type === 'text' ? d.textSize : d.iconSize),
+    height: d.height,
+    color: c.type === 'text' ? d.textColor : PALETTE[id % PALETTE.length],
     recolor: false,
     pos: 'tl',
     rot: 0,
@@ -38,7 +40,8 @@ export function makeGroup(count) {
 }
 
 export function defaultComps() {
-  return [{ id: nextId(), type: 'text', text: 'Your Name', font: 'Roboto Slab', size: 12, height: 1.2, color: '#ffffff' }];
+  const d = getItemDefaults();
+  return [{ id: nextId(), type: 'text', text: 'Your Name', font: d.textFont, size: d.textSize, height: d.height, color: d.textColor }];
 }
 
 /** Returns a new list where the node with this id has been patched (at any depth). */

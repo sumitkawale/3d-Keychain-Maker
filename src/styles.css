@@ -81,3 +81,35 @@ button.primary:disabled{opacity:.6}
 /* selection from the preview */
 .card.sel{outline:2px solid var(--ac);box-shadow:0 0 0 4px rgba(228,87,46,.18)}
 details.focus>summary{color:var(--ac)}
+
+/* settings page, preset badge, dialogs */
+.pbadge{display:flex;align-items:center;gap:7px;width:100%;margin:0 0 8px;padding:7px 10px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);font-weight:600;font-size:12px;text-align:left}
+.pbadge .ptxt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbadge em{font-style:normal;font-weight:600;font-size:10px;padding:1px 6px;border-radius:6px;background:var(--ac);color:#fff}
+.cards2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:18px}
+.icard{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+.icard.cur{border-color:var(--ac)}
+.ictitle{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+.icname{font-size:18px;font-weight:700;margin:6px 0 2px;overflow-wrap:anywhere}
+.iactions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.iactions button{flex:0 0 auto;margin:0}
+.sub-h{font-size:15px;margin:6px 0 10px}
+.pcard.using{border-color:var(--ac)}
+.pills{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:2px 0 4px}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600}
+.pill.def{background:#fdebd3;color:#8a4b00}
+.pill.use{background:#dcf3e4;color:#17663a}
+.pactions{margin-top:10px}
+.pactions button{margin:0;flex:1}
+.editor{max-width:760px;background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin:18px 0 40px}
+.editor h2{font-size:16px;margin:0 0 6px}
+.saverow{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.saverow button{flex:0 0 auto;margin:0}
+.status{margin-bottom:10px;color:var(--tx)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.dialog{background:var(--pn);color:var(--tx);border:1px solid var(--bd);border-radius:14px;padding:18px 20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.dialog h3{margin:0 0 6px;font-size:16px}
+.dialog p{margin:0 0 14px;color:var(--mu)}
+.dlg-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.dlg-actions button{margin:0;flex:0 0 auto}
+button.danger{background:#c0392b;color:#fff;border:0}

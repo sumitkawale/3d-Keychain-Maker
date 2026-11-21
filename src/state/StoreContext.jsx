@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react';
 import { buildKeychain } from '../lib/buildKeychain.js';
 import { loadDraft, saveDraft } from '../lib/db.js';
-import { restoreFonts, useFonts } from '../lib/fonts.js';
+import { restoreFonts, setLastFont, useFonts } from '../lib/fonts.js';
+import { getItemDefaults, initPresetDefaults } from '../lib/presets.js';
 import { snapshotProject } from '../lib/library.js';
 import { initialState, reducer } from './reducer.js';
 import { syncIdCounter } from './tree.js';
@@ -32,6 +33,7 @@ export function StoreProvider({ children }) {
     removeNode: (id) => dispatch({ type: 'remove', id }),
     moveNode: (id, container, index, first) => dispatch({ type: 'move', id, container, index, first }),
     clear: () => dispatch({ type: 'clear' }),
+    applySettings: (settings) => dispatch({ type: 'applySettings', settings }),
     undo: () => dispatch({ type: 'undo' }),
     redo: () => dispatch({ type: 'redo' }),
   }), []);
@@ -46,8 +48,11 @@ export function StoreProvider({ children }) {
   // Restore the auto-saved working copy once, so edits survive refreshes.
   useEffect(() => {
     let dead = false;
-    loadDraft().then(async (draft) => {
-      if (draft && Array.isArray(draft.comps) && !dead) await loadProject(draft, { silent: true, meta: draft.meta });
+    initPresetDefaults().then(() => loadDraft()).then(async (draft) => {
+      if (dead) return;
+      setLastFont(getItemDefaults().textFont);
+      if (draft && Array.isArray(draft.comps)) await loadProject(draft, { silent: true, meta: draft.meta });
+      else dispatch({ type: 'reset' }); // first visit: start from the default settings
     }).finally(() => { if (!dead) setReady(true); });
     return () => { dead = true; };
   }, [loadProject]);

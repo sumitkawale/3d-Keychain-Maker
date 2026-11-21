@@ -1,4 +1,5 @@
 import { DEFAULT_SETTINGS } from '../lib/constants.js';
+import { getDefaultSettings } from '../lib/presets.js';
 import { defaultComps, findNode, flat, insertNode, locate, makeGroup, makeItem, patchNode, removeNode } from './tree.js';
 
 /** Identity of the project being edited: its unique id (null until first saved) and name. */
@@ -9,7 +10,7 @@ const COALESCE_MS = 800;
 
 export function initialState() {
   return {
-    present: { comps: defaultComps(), bic: [], settings: { ...DEFAULT_SETTINGS }, meta: EMPTY_META },
+    present: { comps: defaultComps(), bic: [], settings: getDefaultSettings(), meta: EMPTY_META },
     past: [],
     future: [],
     last: { key: null, t: 0 },
@@ -75,7 +76,16 @@ export function reducer(state, a) {
     }
 
     case 'clear':
-      return commit(state, { comps: defaultComps(), bic: [], settings: { ...DEFAULT_SETTINGS }, meta: EMPTY_META });
+      return commit(state, { comps: defaultComps(), bic: [], settings: getDefaultSettings(), meta: EMPTY_META });
+
+    case 'reset':
+      return { ...state, present: { comps: defaultComps(), bic: [], settings: getDefaultSettings(), meta: EMPTY_META } };
+
+    case 'applySettings': {
+      // Put a settings preset on the current work (one undo step); the project name stays.
+      const settings = { ...p.settings, ...a.settings, kname: p.settings.kname };
+      return commit(state, { ...p, settings });
+    }
 
     case 'meta': {
       const present = { ...p, meta: { ...p.meta, ...a.patch } };

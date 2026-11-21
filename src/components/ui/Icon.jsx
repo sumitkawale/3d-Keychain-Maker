@@ -24,6 +24,9 @@ const PATHS = {
   arrowLeft: <><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></>,
   check: <path d="M5 12l5 5L20 7" />,
   file: <><path d="M6 3h8l5 5v13H6z" /><path d="M14 3v5h5" /></>,
+  sliders: <><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3" /><path d="M1 14h6M9 8h6M17 16h6" /></>,
+  star: <path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21.1 7 14.2 2 9.3l6.9-1z" />,
+  play: <path d="M6 4l14 8-14 8z" />,
   palette: <><circle cx="12" cy="12" r="9" /><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" /><circle cx="16" cy="10" r="1" fill="currentColor" stroke="none" /></>,
 };
 
